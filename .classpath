@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+  <classpathentry kind="src" path="src"/>
+  <classpathentry kind="src" path="test"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+  <classpathentry kind="lib" path="lib/antlr-runtime-3.4.jar"/>
+  <classpathentry kind="lib" path="lib/clojure-1.3.0.jar"/>
+  <classpathentry kind="lib" path="lib/jna-3.4.0.jar"/>
+  <classpathentry kind="lib" path="lib/sequence-library-1.0.1.jar"/>
+  <classpathentry kind="lib" path="lib/sqljet-1.1.0.jar"/>
+  <classpathentry kind="lib" path="lib/svnkit-1.7.4.jar"/>
+  <classpathentry kind="lib" path="lib/trilead-ssh2-1.0.0-build214.jar"/>
+  <classpathentry kind="output" path="classes"/>
+</classpath>
