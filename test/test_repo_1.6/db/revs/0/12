@@ -1,0 +1,44 @@
+id: 0-5.0-12.r12/0
+type: dir
+pred: 0-5.0-6.r6/0
+count: 2
+cpath: /moved-dir
+copyfrom: 6 /copied-dir
+
+PLAIN
+K 6
+README
+V 16
+file 0-1.0.r1/73
+K 11
+commit-copy
+V 17
+file 0-2.0-8.r8/0
+K 7
+commit1
+V 17
+file 0-2.0.r11/96
+K 7
+commit3
+V 18
+file 0-4.0.r11/330
+K 9
+moved-dir
+V 18
+dir 0-5.0-12.r12/0
+END
+ENDREP
+id: 0.0.r12/299
+type: dir
+pred: 0.0.r11/715
+count: 12
+text: 12 100 186 186 929f29e783e04b9f633456a553952d71
+cpath: /
+copyroot: 0 /
+
+0-5._0.t11-b add-dir false false /moved-dir
+6 /copied-dir
+0-5.0-6.r6/0 delete-dir false false /copied-dir
+
+
+299 431

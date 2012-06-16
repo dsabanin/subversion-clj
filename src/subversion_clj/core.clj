@@ -1,3 +1,17 @@
+;; ## Read-only Subversion access
+;;
+;; This code is extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].
+;;
+;; Right now this is just a read-only wrapper around Java's SVNKit that allows you to look
+;; into contents of local and remote repositories (no working copy needed). 
+;; 
+;; At this moment all this library can do is get unified information about all revisions or some particular revision
+;; in the repo. However I'm planning to extend this code as Beanstalk uses more Clojure code
+;; for performance critical parts
+;;
+;; [1] <a href="http://blog.beanstalkapp.com/post/23998022427/beanstalk-clojure-love-and-20x-better-performance">Post in Beanstalk's blog about this</a>
+;;
+
 (ns subversion-clj.core
   (:require 
     [clojure.string :as string])
@@ -12,26 +26,69 @@
      [java.io File]
      [java.util.LinkedList]))
 
-(declare log-record node-kind)
+(declare log-record node-kind node-kind-at-rev)
 
 (DAVRepositoryFactory/setup)
 (SVNRepositoryFactoryImpl/setup)
 (FSRepositoryFactory/setup)
 
 (defn repo-for
-  ^SVNRepository [repo-path]
-  (SVNRepositoryFactory/create (SVNURL/parseURIEncoded repo-path)))
+  "Creates an instance of SVNRepository subclass from a legitimate Subversion URL like:
+  
+  * `https://wildbit.svn.beanstalkapp.com/somerepo`
+  * `file:///storage/somerepo`
+  * `svn://internal-server:3122/somerepo`
 
-(defn logs-for [repo] 
+  You can use it like:
+
+        (repo-for \"file:///storage/my-repo\")
+
+  Or like this:
+
+        (repo-for 
+          \"https://wildbit.svn.beanstalkapp.com/repo\" 
+          \"login\" 
+          \"pass\")"
+  (^SVNRepository [repo-path]
+    (SVNRepositoryFactory/create (SVNURL/parseURIEncoded repo-path)))
+  
+  (^SVNRepository [repo-path name password]
+    (let [repo (repo-for repo-path)
+          auth-mgr (SVNWCUtil/createDefaultAuthenticationManager name password)]
+      (.setAuthenticationManager repo auth-mgr)
+      repo)))
+
+(defn revisions-for 
+  "Returns an array with all the revision records in the repository."
+  [repo]
   (->> (.log repo (into-array String []) ^LinkedList (java.util.LinkedList.) 1 -1 true false)
     (map (partial log-record repo))
     (into [])))
 
-(defn log-for [repo revision]
-  (let [revision (Long. revision)]
-    (first (.log repo (into-array String []) ^LinkedList (java.util.LinkedList.) revision revision true false))))
+(defn revision-for 
+  "Returns an individual revision record.
 
-(defn node-kind [repo path rev]
+   Example record for a copied directory:
+
+        {:revision 6
+        :author \"railsmonk\"
+        :message \"copied directory\"
+        :changes [[\"dir\" [\"new-dir\" \"old-dir\" 5] :copy]]}
+
+   Example record for an edited files:
+
+        {:revision 11
+        :author \"railsmonk\"
+        :message \"editing files\"
+        :changes [[\"file\" \"commit1\" :edit]
+                  [\"file\" \"commit3\" :edit]]}"
+  [repo revision]
+  (let [revision (Long. revision)]
+    (log-record repo (first (.log repo (into-array String []) ^LinkedList (java.util.LinkedList.) revision revision true false)))))
+
+(defn node-kind 
+  "Returns kind of a node path at certain revision - file or directory."
+  [repo path rev]
   (let [basename (.getName (File. ^String path))]
     (if (>= (.indexOf basename ".") 0)
       "file"
@@ -50,15 +107,21 @@
       (apply str (rest path))
       path)))
 
-(defn- change-kind [^FSPathChange change-rec]
-  (let [change (.. change-rec getChangeKind toString)
+(defn- change-kind [change-rec] ;  FSPathChange
+  (let [change (if (instance? FSPathChange change-rec) 
+                 (.. change-rec getChangeKind toString)
+                 (.. change-rec getType toString))
         copy-path (.getCopyPath change-rec)]
     (cond
       copy-path :copy
       (= change "add") :add
+      (= change "A") :add
       (= change "modify") :edit
+      (= change "M") :edit
       (= change "delete") :delete
+      (= change "D") :delete
       (= change "replace") :replace
+      (= change "R") :replace
       (= change "reset") :reset)))
 
 (defn- detailed-path [repo rev log-record ^SVNHashMap$TableEntry path-record]

@@ -1,0 +1,32 @@
+DELTA
+SVNENDREP
+id: 0-2.0.r2/17
+type: file
+count: 0
+text: 2 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 1-1/_2
+cpath: /commit1
+copyroot: 0 /
+
+PLAIN
+K 6
+README
+V 16
+file 0-1.0.r1/73
+K 7
+commit1
+V 16
+file 0-2.0.r2/17
+END
+ENDREP
+id: 0.0.r2/263
+type: dir
+pred: 0.0.r1/286
+count: 2
+text: 2 179 71 71 ac79e7229d67cd84701e19a383c815a5
+cpath: /
+copyroot: 0 /
+
+_0.0.t1-1 add-file true false /commit1
+
+
+263 389
