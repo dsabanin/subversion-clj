@@ -18,6 +18,7 @@ for performance critical parts
     ; This needs to be pointed to your repo, not working copy
     (repo-for "file:///some/path/on-your/disk/repo")
 
+    ; Connecting to remote repository with authentication
     (repo-for "https://wildbit.svn.beanstalkapp.com/test-repo" "my-login" "my-password")
 
     ; Finds revision 100 in repo and returns it
@@ -28,16 +29,24 @@ for performance critical parts
 
 ## Example of revision records
 
+    ; Deleted directory
     {:revision 7
     :author "dsabanin"
     :message "removed directory"
     :changes [["dir" "some-directory" :delete]]}
 
+    ; Edited files
     {:revision 11
     :author "dsabanin"
     :message "editing files"
     :changes [["file" "file-abc" :edit]
               ["file" "file-def" :edit]]}
+
+    ; Copied directory
+    {:revision 6
+    :author "dsabanin"
+    :message "copied dir"
+    :changes [["dir" ["new-directory" "old-directory" 5] :copy]]}
 
 ## License
 
