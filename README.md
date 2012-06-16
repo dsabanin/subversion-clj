@@ -13,6 +13,10 @@ for performance critical parts
 
 [1] <a href="http://blog.beanstalkapp.com/post/23998022427/beanstalk-clojure-love-and-20x-better-performance">Post in Beanstalk's blog about this</a>
 
+## Install
+
+Available from <a href="https://clojars.org/subversion-clj">Clojars</a>.
+
 ## Usage
 
     ; This needs to be pointed to your repo, not working copy
