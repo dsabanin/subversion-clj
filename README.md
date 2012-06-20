@@ -1,4 +1,4 @@
-# subversion-clj
+# subversion-clj [![Build Status](https://secure.travis-ci.org/dsabanin/subversion-clj.png)](http://travis-ci.org/dsabanin/subversion-clj)
 
 ## Read-only Subversion access
 
