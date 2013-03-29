@@ -1,4 +1,4 @@
-(defproject subversion-clj "0.1.1"
+(defproject subversion-clj "0.2.0"
   :description "SVNKit based Subversion API for Clojure"
   :dependencies [[org.tmatesoft.svnkit/svnkit "1.7.8"]
                  [org.clojure/clojure "1.5.1"]]
