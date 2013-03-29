@@ -4,7 +4,8 @@
     [midje.sweet])
   (:import
     [org.tmatesoft.svn.core.internal.util SVNDate]
-    [org.tmatesoft.svn.core.internal.io fs.FSRepository dav.DAVRepository]))
+    [org.tmatesoft.svn.core.internal.io fs.FSRepository dav.DAVRepository]
+    [org.tmatesoft.svn.core SVNException]))
  
 (def mock-repo-path (format "file://%s/test/test_repo_1.6" 
                             (System/getProperty "user.dir")))
@@ -50,7 +51,7 @@
     (dissoc record :time) => (first records-should-be)))
 
 (fact "revision-for should raise an exception for a missing revision"
-  (revision-for mock-repo 9999) => (throws RuntimeException))
+  (revision-for mock-repo 9999) => (throws SVNException))
 
 (fact "node-kind should return proper kind"
   (let [repo mock-repo] 
