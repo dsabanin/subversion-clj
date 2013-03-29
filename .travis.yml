@@ -4,4 +4,4 @@ jdk:
   - openjdk6
 language: clojure
 script: "lein midje"
-
+lein: lein2
