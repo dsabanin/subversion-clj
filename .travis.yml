@@ -3,5 +3,5 @@ jdk:
   - oraclejdk7
   - openjdk6
 language: clojure
-script: "lein2 midje"
+script: "lein2 with-profile dev midje"
 lein: lein2
