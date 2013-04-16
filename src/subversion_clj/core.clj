@@ -58,10 +58,18 @@
       (.setAuthenticationManager repo auth-mgr)
       repo)))
 
+(defn string-array
+  ^"[Ljava.lang.String;" []
+  (into-array String []))
+
+(defn linked-list
+  ^java.util.LinkedList []
+  (java.util.LinkedList.))
+
 (defn revisions-for 
   "Returns an array with all the revision records in the repository."
-  [repo]
-  (->> (.log repo (into-array String []) ^LinkedList (java.util.LinkedList.) 1 -1 true false)
+  [^SVNRepository repo]
+  (->> (.log repo (string-array) (linked-list) 1 -1 true false)
     (map (partial log-record repo))
     (into [])))
 
@@ -82,64 +90,60 @@
         :message \"editing files\"
         :changes [[\"file\" \"commit1\" :edit]
                   [\"file\" \"commit3\" :edit]]}"
-  [repo revision]
+  [^SVNRepository repo ^Long revision]
   (let [revision (Long. revision)]
-    (log-record repo (first (.log repo (into-array String []) ^LinkedList (java.util.LinkedList.) revision revision true false)))))
+    (->> (.log repo (string-array) (linked-list) revision revision true false)
+      first
+      (log-record repo))))
 
 (defn node-kind 
   "Returns kind of a node path at certain revision - file or directory."
   [repo path rev]
   (let [basename (.getName (File. ^String path))]
-    (if (>= (.indexOf basename ".") 0)
-      "file"
+    (if (neg? (.indexOf basename "."))
       (let [node-kind-at-current-rev (node-kind-at-rev repo path rev)]
         (if (= "none" node-kind-at-current-rev)
-          (node-kind-at-rev repo path (- rev 1))
-          node-kind-at-current-rev)))))
+          (node-kind-at-rev repo path (dec rev))
+          node-kind-at-current-rev))
+      "file")))
 
 (defn- node-kind-at-rev ^String [^SVNRepository repo ^String path ^Long rev]
-  (.toString (.checkPath repo path rev)))
+  (.. (.checkPath repo path rev) toString))
 
-(defn- normalize-path [path]
-  (if (= path "/")
-    "/"
-    (if (= (first path) \/)
-      (apply str (rest path))
-      path)))
+(defn- normalize-path ^String [^String path]
+  (if (.startsWith path "/") 
+    (if (= path "/") path (.substring path 1)) 
+    path))
 
-(defn- change-kind [change-rec] ;  FSPathChange
-  (let [change (if (instance? FSPathChange change-rec) 
-                 (.. change-rec getChangeKind toString)
-                 (.. change-rec getType toString))
-        copy-path (.getCopyPath change-rec)]
-    (cond
-      copy-path :copy
-      (= change "add") :add
-      (= change "A") :add
-      (= change "modify") :edit
-      (= change "M") :edit
-      (= change "delete") :delete
-      (= change "D") :delete
-      (= change "replace") :replace
-      (= change "R") :replace
-      (= change "reset") :reset)))
+(def letter->change-sym 
+  {\A :add
+   \M :edit
+   \D :delete
+   \R :replace})
 
-(defn- detailed-path [repo rev log-record ^SVNHashMap$TableEntry path-record]
-  (let [path ^String (normalize-path (.getKey path-record))
+(defn- change-kind [^SVNLogEntryPath change-rec]
+  (let [change-letter (.getType change-rec)
+        copy-rev (.getCopyRevision change-rec)]
+    (if (neg? copy-rev)
+      (letter->change-sym change-letter)
+      :copy)))
+
+(defn- detailed-path 
+  [repo rev log-record ^SVNHashMap$TableEntry path-record]
+  (let [path (normalize-path (.getKey path-record))
         change-rec ^FSPathChange (.getValue path-record)
         node-kind (node-kind repo path rev)
         change-kind (change-kind change-rec)]
-    (if (= change-kind :copy)
-      [node-kind [path 
-                  (normalize-path (.getCopyPath change-rec)) 
-                  (.getCopyRevision change-rec)]
-       change-kind]
-      [node-kind path change-kind])))
+    (cond 
+      (= change-kind :copy) [node-kind 
+                             [path, (normalize-path (.getCopyPath change-rec)), (.getCopyRevision change-rec)] 
+                             change-kind]
+      :else [node-kind path change-kind])))
 
-(defn- changed-paths [repo rev ^SVNLogEntry log-record]
-  (if (= (str rev) "0")
+(defn- changed-paths [repo rev ^SVNLogEntry log-obj]
+  (if (= rev (long 0))
     []
-    (map #(detailed-path repo rev log-record %) ^SVNHashMap (.getChangedPaths log-record))))
+    (map (partial detailed-path repo rev log-record) ^SVNHashMap (.getChangedPaths log-obj))))
 
 (defn- log-record [repo ^SVNLogEntry log-obj]
   (let [rev (.getRevision log-obj)
@@ -150,5 +154,5 @@
     {:revision rev
      :author author
      :time date
-     :message (string/trim (str message))
+     :message (if message (string/trim message) "")
      :changes paths}))
