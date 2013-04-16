@@ -146,13 +146,11 @@
     (map (partial detailed-path repo rev log-record) ^SVNHashMap (.getChangedPaths log-obj))))
 
 (defn- log-record [repo ^SVNLogEntry log-obj]
-  (let [rev (.getRevision log-obj)
-        author (.getAuthor log-obj)
-        date (.getDate log-obj)
+  (let [revision (.getRevision log-obj)
         message (.getMessage log-obj)
-        paths (doall (changed-paths repo rev log-obj))]
-    {:revision rev
-     :author author
-     :time date
+        paths (doall (changed-paths repo revision log-obj))]
+    {:revision revision
+     :author (.getAuthor log-obj)
+     :time (.getDate log-obj)
      :message (if message (string/trim message) "")
      :changes paths}))
