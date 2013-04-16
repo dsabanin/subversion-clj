@@ -1,6 +1,6 @@
 (defproject subversion-clj "0.2.0"
   :description "SVNKit based Subversion API for Clojure"
-  :dependencies [[org.tmatesoft.svnkit/svnkit "1.7.8"]
+  :dependencies [[org.tmatesoft.svnkit/svnkit "1.7.9"]
                  [org.clojure/clojure "1.5.1"]]
   :profiles {:dev {:dependencies [[midje "1.5.1"]
                                   [com.stuartsierra/lazytest "1.2.3"]
