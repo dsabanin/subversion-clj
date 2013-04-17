@@ -154,24 +154,38 @@
     (.getLookClient cm)))
 
 (defn svn-revision
+  "SVNRevision instance for a given revision number."
   ^SVNRevision [revision]
   (SVNRevision/create (long revision)))
 
 (defn youngest
+  "Youngest revision of a repository."
   ^Long [repo]
   (.getLatestRevision repo))
 
 (defn repo-dir
+  "File instance for a repository directory."
   [^SVNRepository repo]
   (File. (.. repo getLocation getPath)))
 
 (defn diff-for 
+  "File and property changes for a given revision. Returns a single ByteArrayOutputStream instance."
   [^SVNRepository repo revision]
   (let [output (baos)]
     (.doGetDiff (svnlook-client) (repo-dir repo) (svn-revision revision) true true true output)
     output))
 
 (defn structured-diff-for
+  "File and property changes for a given revision, structured as maps of maps.
+
+   Format of the returned map is:
+
+         {:files 
+            {\"dir-a/file1\" ByteArrayOutputStream
+             \"dir-b/file2\" ByteArrayOutputStream}
+          :properties 
+            {\"dir-a/file1\" ByteArrayOutputStream}}
+   "
   [^SVNRepository repo revision]
   (let [generator (StructuredDiffGenerator.)
         cli (doto (svnlook-client) (.setDiffGenerator generator))]
