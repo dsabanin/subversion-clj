@@ -14,7 +14,8 @@
 
 (ns subversion-clj.core
   (:require 
-    [clojure.string :as string])
+    [clojure.string :as string]
+    [subversion-clj.diffs :as diffs])
   (:use
     subversion-clj.utils)
   (:import 
@@ -24,9 +25,11 @@
      [org.tmatesoft.svn.core.internal.util SVNHashMap SVNHashMap$TableEntry]     
      [org.tmatesoft.svn.core SVNURL SVNLogEntry SVNLogEntryPath SVNException]
      [org.tmatesoft.svn.core.io SVNRepository SVNRepositoryFactory]
-     [org.tmatesoft.svn.core.wc SVNWCUtil]
-     [java.io File]
-     [java.util.LinkedList]))
+     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision]
+     [org.apache.commons.io.output NullOutputStream]
+     [java.io File ByteArrayOutputStream]
+     [java.util LinkedList]
+     [subversion.diffs StructuredDiffGenerator]))
 
 (declare log-record node-kind node-kind-at-rev)
 
@@ -143,3 +146,34 @@
      :time (.getDate log-obj)
      :message (if message (string/trim message) "")
      :changes paths}))
+
+(defn- svnlook-client 
+  ^org.tmatesoft.svn.core.wc.admin.SVNLookClient []
+  (let [opts (SVNWCUtil/createDefaultOptions true)
+        cm (SVNClientManager/newInstance opts)]
+    (.getLookClient cm)))
+
+(defn svn-revision
+  ^SVNRevision [revision]
+  (SVNRevision/create (long revision)))
+
+(defn youngest
+  ^Long [repo]
+  (.getLatestRevision repo))
+
+(defn repo-dir
+  [^SVNRepository repo]
+  (File. (.. repo getLocation getPath)))
+
+(defn diff-for 
+  [^SVNRepository repo revision]
+  (let [output (baos)]
+    (.doGetDiff (svnlook-client) (repo-dir repo) (svn-revision revision) true true true output)
+    output))
+
+(defn structured-diff-for
+  [^SVNRepository repo revision]
+  (let [generator (StructuredDiffGenerator.)
+        cli (doto (svnlook-client) (.setDiffGenerator generator))]
+    (.doGetDiff cli (repo-dir repo) (svn-revision revision) true true true null-stream)
+    (.grabDiff generator)))

@@ -108,3 +108,27 @@
                 :message "moved dir"
                 :changes [["dir" "copied-dir" :delete] 
                           ["dir" ["moved-dir" "copied-dir" 6] :copy]]})
+
+(fact "diff-for should get a diff for a revision"
+  (let [repo mock-repo]
+    (diff-for repo 1) => (is-instance? java.io.ByteArrayOutputStream)
+    (str (diff-for repo 1)) => "Added: README
+===================================================================
+--- /README	                        (rev 0)
++++ /README	2012-06-16 05:15:01 UTC (rev 1)
+@@ -0,0 +1 @@
++This is a test repo for subversion-clj library.
+
+"))
+
+(fact "structured-diff-for should get a diff for a revision"
+  (let [repo mock-repo
+        diff (structured-diff-for repo 1)]
+    (keys diff) => [:files]
+    (keys (:files diff)) => ["README"]
+    (str ((:files diff) "README")) => "--- /README	                        (rev 0)
++++ /README	2012-06-16 05:15:01 UTC (rev 1)
+@@ -0,0 +1 @@
++This is a test repo for subversion-clj library.
+
+"))
