@@ -60,6 +60,6 @@ Available from <a href="https://clojars.org/subversion-clj">Clojars</a>.
 
 ## License
 
-Copyright (C) 2012 Dima Sabanin
+Copyright (C) 2013 Dima Sabanin
 
 Distributed under the Eclipse Public License, the same as Clojure.
