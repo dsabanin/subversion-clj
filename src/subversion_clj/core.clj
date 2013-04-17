@@ -15,6 +15,8 @@
 (ns subversion-clj.core
   (:require 
     [clojure.string :as string])
+  (:use
+    subversion-clj.utils)
   (:import 
      [org.tmatesoft.svn.core.internal.io.fs FSRepositoryFactory FSPathChange]
      [org.tmatesoft.svn.core.internal.io.dav DAVRepositoryFactory]
@@ -57,14 +59,6 @@
           auth-mgr (SVNWCUtil/createDefaultAuthenticationManager name password)]
       (.setAuthenticationManager repo auth-mgr)
       repo)))
-
-(defn string-array
-  ^"[Ljava.lang.String;" []
-  (into-array String []))
-
-(defn linked-list
-  ^java.util.LinkedList []
-  (java.util.LinkedList.))
 
 (defn revisions-for 
   "Returns an array with all the revision records in the repository."
@@ -109,11 +103,6 @@
 
 (defn- node-kind-at-rev ^String [^SVNRepository repo ^String path ^Long rev]
   (.. (.checkPath repo path rev) toString))
-
-(defn- normalize-path ^String [^String path]
-  (if (.startsWith path "/") 
-    (if (= path "/") path (.substring path 1)) 
-    path))
 
 (def letter->change-sym 
   {\A :add
