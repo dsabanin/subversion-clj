@@ -3028,8 +3028,8 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.1</h2><br /><p>SVNKit based Subversion API for Clojure</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.3.0</td></tr><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.4</td></tr></table></div><div class="dependencies"><h3>dev dependencies</h3><table><tr><td class="dep-name">midje</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">com.stuartsierra/lazytest</td><td class="dotted"><hr /></td><td class="dep-version">1.2.3</td></tr><tr><td class="dep-name">lein-marginalia</td><td class="dotted"><hr /></td><td class="dep-version">0.7.1</td></tr><tr><td class="dep-name">lein-clojars</td><td class="dotted"><hr /></td><td class="dep-version">0.9.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
+</script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.2.2</h2><br /><p>SVNKit based Subversion API for Clojure</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diffs">subversion-clj.diffs</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
 
 <p>This code is extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].</p>
 
@@ -3044,7 +3044,10 @@ for performance critical parts</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.core
   (:require 
-    [clojure.string :as string])
+    [clojure.string :as string]
+    [subversion-clj.diffs :as diffs])
+  (:use
+    subversion-clj.utils)
   (:import 
      [org.tmatesoft.svn.core.internal.io.fs FSRepositoryFactory FSPathChange]
      [org.tmatesoft.svn.core.internal.io.dav DAVRepositoryFactory]
@@ -3052,9 +3055,11 @@ for performance critical parts</p>
      [org.tmatesoft.svn.core.internal.util SVNHashMap SVNHashMap$TableEntry]     
      [org.tmatesoft.svn.core SVNURL SVNLogEntry SVNLogEntryPath SVNException]
      [org.tmatesoft.svn.core.io SVNRepository SVNRepositoryFactory]
-     [org.tmatesoft.svn.core.wc SVNWCUtil]
-     [java.io File]
-     [java.util.LinkedList]))</pre></td></tr><tr><td class="docs">
+     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision]
+     [org.apache.commons.io.output NullOutputStream]
+     [java.io File ByteArrayOutputStream]
+     [java.util LinkedList]
+     [subversion.diffs StructuredDiffGenerator]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(declare log-record node-kind node-kind-at-rev)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(DAVRepositoryFactory/setup)
 (SVNRepositoryFactoryImpl/setup)
@@ -3087,8 +3092,8 @@ for performance critical parts</p>
       (.setAuthenticationManager repo auth-mgr)
       repo)))</pre></td></tr><tr><td class="docs"><p>Returns an array with all the revision records in the repository.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn revisions-for 
-  [repo]
-  (-&gt;&gt; (.log repo (into-array String []) ^LinkedList (java.util.LinkedList.) 1 -1 true false)
+  [^SVNRepository repo]
+  (-&gt;&gt; (.log repo (string-array) (linked-list) 1 -1 true false)
     (map (partial log-record repo))
     (into [])))</pre></td></tr><tr><td class="docs"><p>Returns an individual revision record.</p>
 
@@ -3109,66 +3114,144 @@ for performance critical parts</p>
               ["file" "commit3" :edit]]}
 </code></pre>
 </td><td class="codes"><pre class="brush: clojure">(defn revision-for 
-  [repo revision]
+  [^SVNRepository repo ^Long revision]
   (let [revision (Long. revision)]
-    (log-record repo (first (.log repo (into-array String []) ^LinkedList (java.util.LinkedList.) revision revision true false)))))</pre></td></tr><tr><td class="docs"><p>Returns kind of a node path at certain revision - file or directory.</p>
+    (-&gt;&gt; (.log repo (string-array) (linked-list) revision revision true false)
+      first
+      (log-record repo))))</pre></td></tr><tr><td class="docs"><p>Returns kind of a node path at certain revision - file or directory.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn node-kind 
   [repo path rev]
   (let [basename (.getName (File. ^String path))]
-    (if (&gt;= (.indexOf basename &quot;.&quot;) 0)
-      &quot;file&quot;
+    (if (neg? (.indexOf basename &quot;.&quot;))
       (let [node-kind-at-current-rev (node-kind-at-rev repo path rev)]
         (if (= &quot;none&quot; node-kind-at-current-rev)
-          (node-kind-at-rev repo path (- rev 1))
-          node-kind-at-current-rev)))))</pre></td></tr><tr><td class="docs">
+          (node-kind-at-rev repo path (dec rev))
+          node-kind-at-current-rev))
+      &quot;file&quot;)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- node-kind-at-rev ^String [^SVNRepository repo ^String path ^Long rev]
-  (.toString (.checkPath repo path rev)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- normalize-path [path]
-  (if (= path &quot;/&quot;)
-    &quot;/&quot;
-    (if (= (first path) \/)
-      (apply str (rest path))
-      path)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- change-kind [change-rec] ;  FSPathChange
-  (let [change (if (instance? FSPathChange change-rec) 
-                 (.. change-rec getChangeKind toString)
-                 (.. change-rec getType toString))
-        copy-path (.getCopyPath change-rec)]
-    (cond
-      copy-path :copy
-      (= change &quot;add&quot;) :add
-      (= change &quot;A&quot;) :add
-      (= change &quot;modify&quot;) :edit
-      (= change &quot;M&quot;) :edit
-      (= change &quot;delete&quot;) :delete
-      (= change &quot;D&quot;) :delete
-      (= change &quot;replace&quot;) :replace
-      (= change &quot;R&quot;) :replace
-      (= change &quot;reset&quot;) :reset)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- detailed-path [repo rev log-record ^SVNHashMap$TableEntry path-record]
-  (let [path ^String (normalize-path (.getKey path-record))
+  (.. (.checkPath repo path rev) toString))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def letter-&gt;change-sym 
+  {\A :add
+   \M :edit
+   \D :delete
+   \R :replace})</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- change-kind [^SVNLogEntryPath change-rec]
+  (let [change-letter (.getType change-rec)
+        copy-rev (.getCopyRevision change-rec)]
+    (if (neg? copy-rev)
+      (letter-&gt;change-sym change-letter)
+      :copy)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- detailed-path 
+  [repo rev log-record ^SVNHashMap$TableEntry path-record]
+  (let [path (normalize-path (.getKey path-record))
         change-rec ^FSPathChange (.getValue path-record)
         node-kind (node-kind repo path rev)
         change-kind (change-kind change-rec)]
-    (if (= change-kind :copy)
-      [node-kind [path 
-                  (normalize-path (.getCopyPath change-rec)) 
-                  (.getCopyRevision change-rec)]
-       change-kind]
-      [node-kind path change-kind])))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- changed-paths [repo rev ^SVNLogEntry log-record]
-  (if (= (str rev) &quot;0&quot;)
+    (cond 
+      (= change-kind :copy) [node-kind 
+                             [path, (normalize-path (.getCopyPath change-rec)), (.getCopyRevision change-rec)] 
+                             change-kind]
+      :else [node-kind path change-kind])))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- changed-paths [repo rev ^SVNLogEntry log-obj]
+  (if (= rev (long 0))
     []
-    (map #(detailed-path repo rev log-record %) ^SVNHashMap (.getChangedPaths log-record))))</pre></td></tr><tr><td class="docs">
+    (map (partial detailed-path repo rev log-record) ^SVNHashMap (.getChangedPaths log-obj))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- log-record [repo ^SVNLogEntry log-obj]
-  (let [rev (.getRevision log-obj)
-        author (.getAuthor log-obj)
-        date (.getDate log-obj)
+  (let [revision (.getRevision log-obj)
         message (.getMessage log-obj)
-        paths (doall (changed-paths repo rev log-obj))]
-    {:revision rev
-     :author author
-     :time date
-     :message (string/trim (str message))
-     :changes paths}))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+        paths (doall (changed-paths repo revision log-obj))]
+    {:revision revision
+     :author (.getAuthor log-obj)
+     :time (.getDate log-obj)
+     :message (if message (string/trim message) )
+     :changes paths}))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- svnlook-client 
+  ^org.tmatesoft.svn.core.wc.admin.SVNLookClient []
+  (let [opts (SVNWCUtil/createDefaultOptions true)
+        cm (SVNClientManager/newInstance opts)]
+    (.getLookClient cm)))</pre></td></tr><tr><td class="docs"><p>SVNRevision instance for a given revision number.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn svn-revision
+  ^SVNRevision [revision]
+  (SVNRevision/create (long revision)))</pre></td></tr><tr><td class="docs"><p>Youngest revision of a repository.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn youngest
+  ^Long [repo]
+  (.getLatestRevision repo))</pre></td></tr><tr><td class="docs"><p>File instance for a repository directory.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn repo-dir
+  [^SVNRepository repo]
+  (File. (.. repo getLocation getPath)))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn diff-for 
+  [^SVNRepository repo revision]
+  (let [output (baos)]
+    (.doGetDiff (svnlook-client) (repo-dir repo) (svn-revision revision) true true true output)
+    output))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision, structured as maps of maps.</p>
+
+<p>   Format of the returned map is:</p>
+
+<pre><code>     {:files 
+        {"dir-a/file1" ByteArrayOutputStream
+         "dir-b/file2" ByteArrayOutputStream}
+      :properties 
+        {"dir-a/file1" ByteArrayOutputStream}}
+</code></pre>
+</td><td class="codes"><pre class="brush: clojure">(defn structured-diff-for
+  [^SVNRepository repo revision]
+  (let [generator (StructuredDiffGenerator.)
+        cli (doto (svnlook-client) (.setDiffGenerator generator))]
+    (.doGetDiff cli (repo-dir repo) (svn-revision revision) true true true null-stream)
+    (.grabDiff generator)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diffs" name="subversion-clj.diffs"><h1 class="project-name">subversion-clj.diffs</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.diffs
+  (:use
+    subversion-clj.utils)
+  (:import 
+    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
+    [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
+    [java.io ByteArrayOutputStream])
+  (:gen-class
+    :name &quot;subversion.diffs.StructuredDiffGenerator&quot;
+    :implements [org.tmatesoft.svn.core.wc.admin.ISVNGNUDiffGenerator]
+    :exposes-methods {displayFileDiff parentDisplayFileDiff
+                      displayPropDiff parentDisplayPropDiff}
+    :extends org.tmatesoft.svn.core.internal.wc.DefaultSVNGNUDiffGenerator
+    :init construct
+    :state &quot;state&quot;
+    :methods [[grabDiff [] clojure.lang.IObj]]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn -construct []
+  [[] (atom {:files {}, :properties {}})])</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn -displayHeader 
+  ([this os path deleted] false)
+  ([this type path copyFromPath copyFromRevision result] false))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn -displayFileDiff
+  [^subversion.diffs.StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
+  (let [bs (baos)
+        path (normalize-path path)]
+    (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
+    (swap! (.state this) assoc-in [:files path] bs)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn -displayPropDiff
+  [^subversion.diffs.StructuredDiffGenerator this path baseProps diff os]
+  (let [bs (baos)
+        path (normalize-path path)]
+    (.parentDisplayPropDiff this path baseProps diff bs)
+    (swap! (.state this) assoc-in [:properties path] bs)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn -grabDiff
+  [^subversion.diffs.StructuredDiffGenerator this]
+  @(.state this))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.utils" name="subversion-clj.utils"><h1 class="project-name">subversion-clj.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.utils
+  (:import
+    [org.apache.commons.io.output NullOutputStream]
+    [java.io File ByteArrayOutputStream]
+    [java.util LinkedList]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn normalize-path ^String [^String path]
+  (if (.startsWith path &quot;/&quot;) 
+    (if (= path &quot;/&quot;) path (.substring path 1)) 
+    path))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn baos
+  ^ByteArrayOutputStream []
+  (ByteArrayOutputStream.))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def ^NullOutputStream null-stream (NullOutputStream.))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn string-array
+  ^&quot;[Ljava.lang.String;&quot; []
+  (into-array String []))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn linked-list
+  ^LinkedList []
+  (LinkedList.))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>
