@@ -16,7 +16,7 @@
     :methods [[grabDiff [] clojure.lang.IObj]]))
 
 (defn -construct []
-  [[] (atom {})])
+  [[] (atom {:files {}, :properties {}})])
 
 (defn -displayHeader 
   ([this os path deleted] false)

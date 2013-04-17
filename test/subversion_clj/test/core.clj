@@ -124,8 +124,9 @@
 (fact "structured-diff-for should get a diff for a revision"
   (let [repo mock-repo
         diff (structured-diff-for repo 1)]
-    (keys diff) => [:files]
+    (keys diff) => [:files :properties]
     (keys (:files diff)) => ["README"]
+    (:properties diff) => {}
     (str ((:files diff) "README")) => "--- /README	                        (rev 0)
 +++ /README	2012-06-16 05:15:01 UTC (rev 1)
 @@ -0,0 +1 @@
