@@ -169,7 +169,9 @@
   (File. (.. repo getLocation getPath)))
 
 (defn diff-for 
-  "File and property changes for a given revision. Returns a single ByteArrayOutputStream instance."
+  "File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.
+
+_Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision]
   (let [output (baos)]
     (.doGetDiff (svnlook-client) (repo-dir repo) (svn-revision revision) true true true output)
@@ -185,7 +187,8 @@
              \"dir-b/file2\" ByteArrayOutputStream}
           :properties 
             {\"dir-a/file1\" ByteArrayOutputStream}}
-   "
+   
+_Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision]
   (let [generator (StructuredDiffGenerator.)
         cli (doto (svnlook-client) (.setDiffGenerator generator))]
