@@ -3029,7 +3029,7 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.2.2</h2><br /><p>SVNKit based Subversion API for Clojure</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diffs">subversion-clj.diffs</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">org.apache.commons/commons-io</td><td class="dotted"><hr /></td><td class="dep-version">1.3.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diffs">subversion-clj.diffs</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
 
 <p>This code is extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].</p>
 
@@ -3179,6 +3179,8 @@ for performance critical parts</p>
 </td><td class="codes"><pre class="brush: clojure">(defn repo-dir
   [^SVNRepository repo]
   (File. (.. repo getLocation getPath)))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.</p>
+
+<p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn diff-for 
   [^SVNRepository repo revision]
   (let [output (baos)]
@@ -3193,6 +3195,8 @@ for performance critical parts</p>
       :properties 
         {"dir-a/file1" ByteArrayOutputStream}}
 </code></pre>
+
+<p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn structured-diff-for
   [^SVNRepository repo revision]
   (let [generator (StructuredDiffGenerator.)
