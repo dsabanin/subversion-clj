@@ -3059,7 +3059,8 @@ for performance critical parts</p>
      [org.apache.commons.io.output NullOutputStream]
      [java.io File ByteArrayOutputStream]
      [java.util LinkedList]
-     [subversion.diffs StructuredDiffGenerator]))</pre></td></tr><tr><td class="docs">
+     [subversion.diffs StructuredDiffGenerator]
+     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(declare log-record node-kind node-kind-at-rev)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(DAVRepositoryFactory/setup)
 (SVNRepositoryFactoryImpl/setup)
@@ -3166,7 +3167,7 @@ for performance critical parts</p>
      :message (if message (string/trim message) )
      :changes paths}))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- svnlook-client 
-  ^org.tmatesoft.svn.core.wc.admin.SVNLookClient []
+  ^SVNLookClient []
   (let [opts (SVNWCUtil/createDefaultOptions true)
         cm (SVNClientManager/newInstance opts)]
     (.getLookClient cm)))</pre></td></tr><tr><td class="docs"><p>SVNRevision instance for a given revision number.</p>
@@ -3174,18 +3175,21 @@ for performance critical parts</p>
   ^SVNRevision [revision]
   (SVNRevision/create (long revision)))</pre></td></tr><tr><td class="docs"><p>Youngest revision of a repository.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn youngest
-  ^Long [repo]
+  ^Long [^SVNRepository repo]
   (.getLatestRevision repo))</pre></td></tr><tr><td class="docs"><p>File instance for a repository directory.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn repo-dir
-  [^SVNRepository repo]
+  ^File [^SVNRepository repo]
   (File. (.. repo getLocation getPath)))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.</p>
 
 <p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn diff-for 
-  [^SVNRepository repo revision]
-  (let [output (baos)]
-    (.doGetDiff (svnlook-client) (repo-dir repo) (svn-revision revision) true true true output)
-    output))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision, structured as maps of maps.</p>
+  ([^SVNRepository repo revision]
+    (let [output (baos)]
+      (.doGetDiff (svnlook-client) (repo-dir repo) (svn-revision revision) true true true output)
+      output))
+  ([^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
+    (let [cli (doto (svnlook-client) (.setDiffGenerator generator))]
+      (.doGetDiff cli (repo-dir repo) (svn-revision revision) true true true null-stream))))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision, structured as maps of maps.</p>
 
 <p>   Format of the returned map is:</p>
 
@@ -3198,18 +3202,18 @@ for performance critical parts</p>
 
 <p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn structured-diff-for
-  [^SVNRepository repo revision]
-  (let [generator (StructuredDiffGenerator.)
-        cli (doto (svnlook-client) (.setDiffGenerator generator))]
-    (.doGetDiff cli (repo-dir repo) (svn-revision revision) true true true null-stream)
-    (.grabDiff generator)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diffs" name="subversion-clj.diffs"><h1 class="project-name">subversion-clj.diffs</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  ([^SVNRepository repo revision]
+    (let [generator (StructuredDiffGenerator.)]
+      (diff-for repo revision generator)
+      (.grabDiff generator))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diffs" name="subversion-clj.diffs"><h1 class="project-name">subversion-clj.diffs</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.diffs
   (:use
     subversion-clj.utils)
   (:import 
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
     [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
-    [java.io ByteArrayOutputStream])
+    [java.io ByteArrayOutputStream]
+    [subversion.diffs StructuredDiffGenerator])
   (:gen-class
     :name &quot;subversion.diffs.StructuredDiffGenerator&quot;
     :implements [org.tmatesoft.svn.core.wc.admin.ISVNGNUDiffGenerator]
@@ -3218,27 +3222,44 @@ for performance critical parts</p>
     :extends org.tmatesoft.svn.core.internal.wc.DefaultSVNGNUDiffGenerator
     :init construct
     :state &quot;state&quot;
-    :methods [[grabDiff [] clojure.lang.IObj]]))</pre></td></tr><tr><td class="docs">
+    :methods [[grabDiff [] clojure.lang.IObj]
+              [grabFileChanges [] clojure.lang.IObj]]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -construct []
-  [[] (atom {:files {}, :properties {}})])</pre></td></tr><tr><td class="docs">
+  [[] (atom {:diffs {:files {}
+                     :properties {}}
+             :changes {}})])</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def type-&gt;keyword
+  {ISVNGNUDiffGenerator/ADDED :add
+   ISVNGNUDiffGenerator/COPIED :copy
+   ISVNGNUDiffGenerator/DELETED :delete
+   ISVNGNUDiffGenerator/MODIFIED :edit})</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn update-change-type
+  [^StructuredDiffGenerator generator path type]
+  (let [path (normalize-path path)]
+    (swap! (.state generator) assoc-in [:changes path] type)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -displayHeader 
-  ([this os path deleted] false)
-  ([this type path copyFromPath copyFromRevision result] false))</pre></td></tr><tr><td class="docs">
+  ([^StructuredDiffGenerator this os path deleted] false)
+  ([^StructuredDiffGenerator this type path copyFromPath copyFromRevision result]
+    (update-change-type this path (type-&gt;keyword type))
+    false))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -displayFileDiff
-  [^subversion.diffs.StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
+  [^StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
   (let [bs (baos)
         path (normalize-path path)]
     (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
-    (swap! (.state this) assoc-in [:files path] bs)))</pre></td></tr><tr><td class="docs">
+    (swap! (.state this) assoc-in [:diffs :files path] bs)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -displayPropDiff
-  [^subversion.diffs.StructuredDiffGenerator this path baseProps diff os]
+  [^StructuredDiffGenerator this path baseProps diff os]
   (let [bs (baos)
         path (normalize-path path)]
     (.parentDisplayPropDiff this path baseProps diff bs)
-    (swap! (.state this) assoc-in [:properties path] bs)))</pre></td></tr><tr><td class="docs">
+    (swap! (.state this) assoc-in [:diffs :properties path] bs)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -grabDiff
   [^subversion.diffs.StructuredDiffGenerator this]
-  @(.state this))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.utils" name="subversion-clj.utils"><h1 class="project-name">subversion-clj.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  (:diffs @(.state this)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn -grabFileChanges
+  [^subversion.diffs.StructuredDiffGenerator this]
+  (:changes @(.state this)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.utils" name="subversion-clj.utils"><h1 class="project-name">subversion-clj.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.utils
   (:import
     [org.apache.commons.io.output NullOutputStream]
