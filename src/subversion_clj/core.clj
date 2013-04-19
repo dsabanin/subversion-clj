@@ -29,7 +29,8 @@
      [org.apache.commons.io.output NullOutputStream]
      [java.io File ByteArrayOutputStream]
      [java.util LinkedList]
-     [subversion.diffs StructuredDiffGenerator]))
+     [subversion.diffs StructuredDiffGenerator]
+     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
 (declare log-record node-kind node-kind-at-rev)
 
@@ -148,7 +149,7 @@
      :changes paths}))
 
 (defn- svnlook-client 
-  ^org.tmatesoft.svn.core.wc.admin.SVNLookClient []
+  ^SVNLookClient []
   (let [opts (SVNWCUtil/createDefaultOptions true)
         cm (SVNClientManager/newInstance opts)]
     (.getLookClient cm)))
@@ -160,12 +161,12 @@
 
 (defn youngest
   "Youngest revision of a repository."
-  ^Long [repo]
+  ^Long [^SVNRepository repo]
   (.getLatestRevision repo))
 
 (defn repo-dir
   "File instance for a repository directory."
-  [^SVNRepository repo]
+  ^File [^SVNRepository repo]
   (File. (.. repo getLocation getPath)))
 
 (defn diff-for 
