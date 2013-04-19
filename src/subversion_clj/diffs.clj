@@ -4,7 +4,8 @@
   (:import 
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
     [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
-    [java.io ByteArrayOutputStream])
+    [java.io ByteArrayOutputStream]
+    [subversion.diffs StructuredDiffGenerator])
   (:gen-class
     :name "subversion.diffs.StructuredDiffGenerator"
     :implements [org.tmatesoft.svn.core.wc.admin.ISVNGNUDiffGenerator]
@@ -13,29 +14,49 @@
     :extends org.tmatesoft.svn.core.internal.wc.DefaultSVNGNUDiffGenerator
     :init construct
     :state "state"
-    :methods [[grabDiff [] clojure.lang.IObj]]))
+    :methods [[grabDiff [] clojure.lang.IObj]
+              [grabFileChanges [] clojure.lang.IObj]]))
 
 (defn -construct []
-  [[] (atom {:files {}, :properties {}})])
+  [[] (atom {:diffs {:files {}
+                     :properties {}}
+             :changes {}})])
+
+(def type->keyword
+  {ISVNGNUDiffGenerator/ADDED :add
+   ISVNGNUDiffGenerator/COPIED :copy
+   ISVNGNUDiffGenerator/DELETED :delete
+   ISVNGNUDiffGenerator/MODIFIED :edit})
+
+(defn update-change-type
+  [^StructuredDiffGenerator generator path type]
+  (let [path (normalize-path path)]
+    (swap! (.state generator) assoc-in [:changes path] type)))
 
 (defn -displayHeader 
-  ([this os path deleted] false)
-  ([this type path copyFromPath copyFromRevision result] false))
+  ([^StructuredDiffGenerator this os path deleted] false)
+  ([^StructuredDiffGenerator this type path copyFromPath copyFromRevision result]
+    (update-change-type this path (type->keyword type))
+    false))
 
 (defn -displayFileDiff
-  [^subversion.diffs.StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
+  [^StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
   (let [bs (baos)
         path (normalize-path path)]
     (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
-    (swap! (.state this) assoc-in [:files path] bs)))
+    (swap! (.state this) assoc-in [:diffs :files path] bs)))
 
 (defn -displayPropDiff
-  [^subversion.diffs.StructuredDiffGenerator this path baseProps diff os]
+  [^StructuredDiffGenerator this path baseProps diff os]
   (let [bs (baos)
         path (normalize-path path)]
     (.parentDisplayPropDiff this path baseProps diff bs)
-    (swap! (.state this) assoc-in [:properties path] bs)))
+    (swap! (.state this) assoc-in [:diffs :properties path] bs)))
 
 (defn -grabDiff
   [^subversion.diffs.StructuredDiffGenerator this]
-  @(.state this))
+  (:diffs @(.state this)))
+
+(defn -grabFileChanges
+  [^subversion.diffs.StructuredDiffGenerator this]
+  (:changes @(.state this)))
