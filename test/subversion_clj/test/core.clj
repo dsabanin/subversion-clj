@@ -2,10 +2,13 @@
   (:use 
     [subversion-clj.core]
     [midje.sweet])
+  (:require 
+    subversion-clj.diffs)
   (:import
     [org.tmatesoft.svn.core.internal.util SVNDate]
     [org.tmatesoft.svn.core.internal.io fs.FSRepository dav.DAVRepository]
-    [org.tmatesoft.svn.core SVNException]))
+    [org.tmatesoft.svn.core SVNException]
+    [subversion.diffs StructuredDiffGenerator]))
  
 (def mock-repo-path (format "file://%s/test/test_repo_1.6" 
                             (System/getProperty "user.dir")))
@@ -133,3 +136,23 @@
 +This is a test repo for subversion-clj library.
 
 "))
+
+(fact "structured-diff-for should get a diff for a revision"
+  (let [repo mock-repo
+        diff (structured-diff-for repo 1)]
+    (keys diff) => [:files :properties]
+    (keys (:files diff)) => ["README"]
+    (:properties diff) => {}
+    (str ((:files diff) "README")) => "--- /README	                        (rev 0)
++++ /README	2012-06-16 05:15:01 UTC (rev 1)
+@@ -0,0 +1 @@
++This is a test repo for subversion-clj library.
+
+"))
+
+(fact "StructuredDiffGenerator should have list of changes"
+  (let [repo mock-repo
+        gen (StructuredDiffGenerator.)
+        diff (diff-for repo 11 gen)]
+    (.grabFileChanges gen) => {"commit1" :edit
+                               "commit3" :edit}))

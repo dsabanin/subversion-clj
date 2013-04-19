@@ -173,10 +173,13 @@
   "File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
-  [^SVNRepository repo revision]
-  (let [output (baos)]
-    (.doGetDiff (svnlook-client) (repo-dir repo) (svn-revision revision) true true true output)
-    output))
+  ([^SVNRepository repo revision]
+    (let [output (baos)]
+      (.doGetDiff (svnlook-client) (repo-dir repo) (svn-revision revision) true true true output)
+      output))
+  ([^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
+    (let [cli (doto (svnlook-client) (.setDiffGenerator generator))]
+      (.doGetDiff cli (repo-dir repo) (svn-revision revision) true true true null-stream))))
 
 (defn structured-diff-for
   "File and property changes for a given revision, structured as maps of maps.
@@ -190,8 +193,7 @@ _Works only with repo object pointing to a local repo directory (not working cop
             {\"dir-a/file1\" ByteArrayOutputStream}}
    
 _Works only with repo object pointing to a local repo directory (not working copy)._"
-  [^SVNRepository repo revision]
-  (let [generator (StructuredDiffGenerator.)
-        cli (doto (svnlook-client) (.setDiffGenerator generator))]
-    (.doGetDiff cli (repo-dir repo) (svn-revision revision) true true true null-stream)
-    (.grabDiff generator)))
+  ([^SVNRepository repo revision]
+    (let [generator (StructuredDiffGenerator.)]
+      (diff-for repo revision generator)
+      (.grabDiff generator))))
