@@ -1,3 +1,7 @@
+;; ## Local FS access to Subversion repos
+;;
+;; This allows you to get fast access to a repo stored locally. The same way svnadmin and svnlook do.
+
 (ns subversion-clj.local
   (:require
     [subversion-clj.core :as svn]
