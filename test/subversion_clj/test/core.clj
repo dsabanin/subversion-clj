@@ -3,7 +3,8 @@
     [subversion-clj.core]
     [midje.sweet])
   (:require 
-    subversion-clj.diff-generator)
+    subversion-clj.diff-generator
+    [subversion-clj.local :as local])
   (:import
     [org.tmatesoft.svn.core.internal.util SVNDate]
     [org.tmatesoft.svn.core.internal.io fs.FSRepository dav.DAVRepository]
@@ -114,8 +115,8 @@
 
 (fact "diff-for should get a diff for a revision"
   (let [repo mock-repo]
-    (diff-for repo 1) => (is-instance? java.io.ByteArrayOutputStream)
-    (str (diff-for repo 1)) => "Added: README
+    (local/diff-for repo 1) => (is-instance? java.io.ByteArrayOutputStream)
+    (str (local/diff-for repo 1)) => "Added: README
 ===================================================================
 --- /README	                        (rev 0)
 +++ /README	2012-06-16 05:15:01 UTC (rev 1)
@@ -126,7 +127,7 @@
 
 (fact "structured-diff-for should get a diff for a revision"
   (let [repo mock-repo
-        diff (structured-diff-for repo 1)]
+        diff (local/structured-diff-for repo 1)]
     (keys diff) => [:files :properties]
     (keys (:files diff)) => ["README"]
     (:properties diff) => {}
@@ -139,7 +140,7 @@
 
 (fact "structured-diff-for should get a diff for a revision"
   (let [repo mock-repo
-        diff (structured-diff-for repo 1)]
+        diff (local/structured-diff-for repo 1)]
     (keys diff) => [:files :properties]
     (keys (:files diff)) => ["README"]
     (:properties diff) => {}
@@ -153,6 +154,6 @@
 (fact "StructuredDiffGenerator should have list of changes"
   (let [repo mock-repo
         gen (StructuredDiffGenerator.)
-        diff (diff-for repo 11 gen)]
+        diff (local/diff-for repo 11 gen)]
     (.grabFileChanges gen) => {"commit1" :edit
                                "commit3" :edit}))
