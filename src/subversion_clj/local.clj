@@ -11,7 +11,7 @@
     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision]
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
-(defn- svnlook-client 
+(defn svnlook-client 
   ^SVNLookClient []
   (let [opts (SVNWCUtil/createDefaultOptions true)
         cm (SVNClientManager/newInstance opts)]
