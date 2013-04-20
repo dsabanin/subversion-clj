@@ -1,13 +1,13 @@
-(ns subversion-clj.diffs
+(ns subversion-clj.diff-generator
   (:use
     subversion-clj.utils)
   (:import 
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
     [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
     [java.io ByteArrayOutputStream]
-    [subversion.diffs StructuredDiffGenerator])
+    [subversion.clj StructuredDiffGenerator])
   (:gen-class
-    :name "subversion.diffs.StructuredDiffGenerator"
+    :name "subversion.clj.StructuredDiffGenerator"
     :implements [org.tmatesoft.svn.core.wc.admin.ISVNGNUDiffGenerator]
     :exposes-methods {displayFileDiff parentDisplayFileDiff
                       displayPropDiff parentDisplayPropDiff}
@@ -54,9 +54,9 @@
     (swap! (.state this) assoc-in [:diffs :properties path] bs)))
 
 (defn -grabDiff
-  [^subversion.diffs.StructuredDiffGenerator this]
+  [^StructuredDiffGenerator this]
   (:diffs @(.state this)))
 
 (defn -grabFileChanges
-  [^subversion.diffs.StructuredDiffGenerator this]
+  [^StructuredDiffGenerator this]
   (:changes @(.state this)))

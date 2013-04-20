@@ -15,7 +15,7 @@
 (ns subversion-clj.core
   (:require 
     [clojure.string :as string]
-    [subversion-clj.diffs :as diffs])
+    subversion-clj.diff-generator)
   (:use
     subversion-clj.utils)
   (:import 
@@ -29,7 +29,7 @@
      [org.apache.commons.io.output NullOutputStream]
      [java.io File ByteArrayOutputStream]
      [java.util LinkedList]
-     [subversion.diffs StructuredDiffGenerator]
+     [subversion.clj StructuredDiffGenerator]
      [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
 (declare log-record node-kind node-kind-at-rev)

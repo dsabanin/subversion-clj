@@ -3,12 +3,12 @@
     [subversion-clj.core]
     [midje.sweet])
   (:require 
-    subversion-clj.diffs)
+    subversion-clj.diff-generator)
   (:import
     [org.tmatesoft.svn.core.internal.util SVNDate]
     [org.tmatesoft.svn.core.internal.io fs.FSRepository dav.DAVRepository]
     [org.tmatesoft.svn.core SVNException]
-    [subversion.diffs StructuredDiffGenerator]))
+    [subversion.clj StructuredDiffGenerator]))
  
 (def mock-repo-path (format "file://%s/test/test_repo_1.6" 
                             (System/getProperty "user.dir")))
