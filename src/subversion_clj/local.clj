@@ -51,6 +51,6 @@ _Works only with repo object pointing to a local repo directory (not working cop
    
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   ([^SVNRepository repo revision]
-    (let [generator (StructuredDiffGenerator.)]
+    (let [generator (doto (StructuredDiffGenerator.) (.setEncoding "ISO-8859-1"))]
       (diff-for repo revision generator)
       (.grabDiff generator))))
