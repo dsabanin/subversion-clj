@@ -1,6 +1,8 @@
 (ns subversion-clj.diff-generator
   (:use
     subversion-clj.utils)
+  (:require
+    [hozumi.det-enc :as enc])
   (:import 
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
     [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
@@ -42,9 +44,11 @@
 (defn -displayFileDiff
   [^StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
   (let [bs (baos)
-        path (normalize-path path)]
-    (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
-    (swap! (.state this) assoc-in [:diffs :files path] bs)))
+        path (normalize-path path)
+        _ (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
+        encoding (or (enc/detect (baos->bais bs)) 
+                   (.getEncoding this))]
+    (swap! (.state this) assoc-in [:diffs :files path] (.toString bs encoding))))
 
 (defn -displayPropDiff
   [^StructuredDiffGenerator this path baseProps diff os]

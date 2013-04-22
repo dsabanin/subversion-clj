@@ -2,7 +2,8 @@
   :description "SVNKit based Subversion API for Clojure"
   :dependencies [[org.tmatesoft.svnkit/svnkit "1.7.9"]
                  [org.clojure/clojure "1.5.1"]
-                 [org.apache.commons/commons-io "1.3.2"]]
+                 [org.apache.commons/commons-io "1.3.2"]
+                 [org.clojars.dsabanin/clj-det-enc "1.0.0"]]
   :profiles {:dev {:dependencies [[midje "1.5.1"]
                                   [com.stuartsierra/lazytest "1.2.3"]
                                   [lein-marginalia "0.7.1"]]

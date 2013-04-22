@@ -1,7 +1,7 @@
 (ns subversion-clj.utils
   (:import
     [org.apache.commons.io.output NullOutputStream]
-    [java.io File ByteArrayOutputStream]
+    [java.io File ByteArrayOutputStream ByteArrayInputStream]
     [java.util LinkedList]))
 
 (defn normalize-path ^String [^String path]
@@ -12,6 +12,10 @@
 (defn baos
   ^ByteArrayOutputStream []
   (ByteArrayOutputStream.))
+
+(defn baos->bais
+  ^ByteArrayInputStream [^ByteArrayOutputStream bs]
+  (ByteArrayInputStream. (.toByteArray bs)))
 
 (def ^NullOutputStream null-stream (NullOutputStream.))
 
