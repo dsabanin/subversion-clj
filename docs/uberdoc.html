@@ -3028,8 +3028,8 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.2.4</h2><br /><p>SVNKit based Subversion API for Clojure</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">org.apache.commons/commons-io</td><td class="dotted"><hr /></td><td class="dep-version">1.3.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diff-generator">subversion-clj.diff-generator</a></li><li><a href="#subversion-clj.local">subversion-clj.local</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
+</script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.2.5</h2><br /><p>SVNKit based Subversion API for Clojure</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">org.apache.commons/commons-io</td><td class="dotted"><hr /></td><td class="dep-version">1.3.2</td></tr><tr><td class="dep-name">org.clojars.dsabanin/clj-det-enc</td><td class="dotted"><hr /></td><td class="dep-version">1.0.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diff-generator">subversion-clj.diff-generator</a></li><li><a href="#subversion-clj.local">subversion-clj.local</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
 
 <p>This code is extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].</p>
 
@@ -3175,6 +3175,8 @@ for performance critical parts</p>
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.diff-generator
   (:use
     subversion-clj.utils)
+  (:require
+    [hozumi.det-enc :as enc])
   (:import 
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
     [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
@@ -3211,9 +3213,11 @@ for performance critical parts</p>
 </td><td class="codes"><pre class="brush: clojure">(defn -displayFileDiff
   [^StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
   (let [bs (baos)
-        path (normalize-path path)]
-    (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
-    (swap! (.state this) assoc-in [:diffs :files path] bs)))</pre></td></tr><tr><td class="docs">
+        path (normalize-path path)
+        _ (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
+        encoding (or (enc/detect (baos-&gt;bais bs)) 
+                   (.getEncoding this))]
+    (swap! (.state this) assoc-in [:diffs :files path] (.toString bs encoding))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -displayPropDiff
   [^StructuredDiffGenerator this path baseProps diff os]
   (let [bs (baos)
@@ -3272,13 +3276,13 @@ for performance critical parts</p>
 <p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn structured-diff-for
   ([^SVNRepository repo revision]
-    (let [generator (StructuredDiffGenerator.)]
+    (let [generator (doto (StructuredDiffGenerator.) (.setEncoding &quot;ISO-8859-1&quot;))]
       (diff-for repo revision generator)
       (.grabDiff generator))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.utils" name="subversion-clj.utils"><h1 class="project-name">subversion-clj.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.utils
   (:import
     [org.apache.commons.io.output NullOutputStream]
-    [java.io File ByteArrayOutputStream]
+    [java.io File ByteArrayOutputStream ByteArrayInputStream]
     [java.util LinkedList]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn normalize-path ^String [^String path]
   (if (.startsWith path &quot;/&quot;) 
@@ -3287,6 +3291,9 @@ for performance critical parts</p>
 </td><td class="codes"><pre class="brush: clojure">(defn baos
   ^ByteArrayOutputStream []
   (ByteArrayOutputStream.))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn baos-&gt;bais
+  ^ByteArrayInputStream [^ByteArrayOutputStream bs]
+  (ByteArrayInputStream. (.toByteArray bs)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^NullOutputStream null-stream (NullOutputStream.))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn string-array
   ^&quot;[Ljava.lang.String;&quot; []
