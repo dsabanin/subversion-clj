@@ -30,13 +30,24 @@
   "File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
-  ([^SVNRepository repo revision]
-    (let [output (baos)]
-      (.doGetDiff (svnlook-client) (repo-dir repo) (svn/svn-revision revision) true true true output)
-      output))
-  ([^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
+  [^SVNRepository repo revision]
+  (let [output (baos)]
+    (.doGetDiff (svnlook-client) (repo-dir repo) (svn/svn-revision revision) true true true output)
+    output))
+
+(defn diff-for!
+  "File and property changes for a given revision. Writes changes into a generator instance.
+
+_Works only with repo object pointing to a local repo directory (not working copy)._"
+  [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
     (let [cli (doto (svnlook-client) (.setDiffGenerator generator))]
-      (.doGetDiff cli (repo-dir repo) (svn/svn-revision revision) true true true null-stream))))
+      (.doGetDiff cli (repo-dir repo) (svn/svn-revision revision) true true true null-stream))
+    generator)
+
+(defn structured-generator
+  ^StructuredDiffGenerator []
+  (doto (StructuredDiffGenerator.)
+    (.setEncoding "ISO-8859-1")))
 
 (defn structured-diff-for
   "File and property changes for a given revision, structured as maps of maps.
@@ -50,7 +61,7 @@ _Works only with repo object pointing to a local repo directory (not working cop
             {\"dir-a/file1\" ByteArrayOutputStream}}
    
 _Works only with repo object pointing to a local repo directory (not working copy)._"
-  ([^SVNRepository repo revision]
-    (let [generator (doto (StructuredDiffGenerator.) (.setEncoding "ISO-8859-1"))]
-      (diff-for repo revision generator)
-      (.grabDiff generator))))
+  [^SVNRepository repo revision]
+  (let [generator (structured-generator)]
+    (diff-for! repo revision generator)
+    (.grabDiff generator)))
