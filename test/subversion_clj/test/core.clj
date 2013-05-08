@@ -153,7 +153,6 @@
 
 (fact "StructuredDiffGenerator should have list of changes"
   (let [repo mock-repo
-        gen (StructuredDiffGenerator.)
-        diff (local/diff-for repo 11 gen)]
+        gen (local/diff-for! repo 11 (StructuredDiffGenerator.))]
     (.grabFileChanges gen) => {"commit1" :edit
                                "commit3" :edit}))
