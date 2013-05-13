@@ -4,7 +4,7 @@
 
 (ns subversion-clj.local
   (:require
-    [subversion-clj.core :as svn]
+    [subversion-clj.core :as core]
     subversion-clj.diff-generator)
   (:use
     subversion-clj.utils)
@@ -32,7 +32,7 @@
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision]
   (let [output (baos)]
-    (.doGetDiff (svnlook-client) (repo-dir repo) (svn/svn-revision revision) true true true output)
+    (.doGetDiff (svnlook-client) (repo-dir repo) (core/svn-revision revision) true true true output)
     output))
 
 (defn diff-for!
@@ -41,7 +41,7 @@ _Works only with repo object pointing to a local repo directory (not working cop
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
     (let [cli (doto (svnlook-client) (.setDiffGenerator generator))]
-      (.doGetDiff cli (repo-dir repo) (svn/svn-revision revision) true true true null-stream))
+      (.doGetDiff cli (repo-dir repo) (core/svn-revision revision) true true true null-stream))
     generator)
 
 (defn structured-generator
