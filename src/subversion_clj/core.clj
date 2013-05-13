@@ -38,6 +38,14 @@
 (SVNRepositoryFactoryImpl/setup)
 (FSRepositoryFactory/setup)
 
+(defn auth-manager
+  [name password]
+  (SVNWCUtil/createDefaultAuthenticationManager name password))
+
+(defn svn-url
+  [uri]
+  (SVNURL/parseURIEncoded uri))
+
 (defn repo-for
   "Creates an instance of SVNRepository subclass from a legitimate Subversion URL like:
   
@@ -55,14 +63,14 @@
           \"https://wildbit.svn.beanstalkapp.com/repo\" 
           \"login\" 
           \"pass\")"
-  (^SVNRepository [repo-path]
-    (SVNRepositoryFactory/create (SVNURL/parseURIEncoded repo-path)))
+  (^SVNRepository [uri]
+    (SVNRepositoryFactory/create (svn-url uri)))
   
-  (^SVNRepository [repo-path name password]
-    (let [repo (repo-for repo-path)
-          auth-mgr (SVNWCUtil/createDefaultAuthenticationManager name password)]
-      (.setAuthenticationManager repo auth-mgr)
-      repo)))
+  (^SVNRepository [uri name password]
+    (let [repo (repo-for uri)
+          auth-mgr (auth-manager name password)]
+      (doto repo
+        (.setAuthenticationManager auth-mgr)))))
 
 (defn revisions-for 
   "Returns an array with all the revision records in the repository."
