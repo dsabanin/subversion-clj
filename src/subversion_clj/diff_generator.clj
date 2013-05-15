@@ -2,7 +2,8 @@
   (:use
     subversion-clj.utils)
   (:require
-    [hozumi.det-enc :as enc])
+    [hozumi.det-enc :as enc]
+    [clojure.string :as string])
   (:import 
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
     [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
@@ -41,21 +42,45 @@
     (update-change-type this path (type->keyword type))
     false))
 
+(defn binary?
+  [mime]
+  (= mime "application/octet-stream"))
+
+(def text? (complement binary?))
+
+(defn text-diff
+  [^StructuredDiffGenerator generator path file1 file2 rev1 rev2 mime1 mime2]
+  (let [bs (baos)
+        encoding (or (enc/detect (baos->bais bs)) (.getEncoding generator))]
+    (.parentDisplayFileDiff generator path file1 file2 rev1 rev2 mime1 mime2 bs)
+    (.toString bs encoding)))
+
+(defn set-diff!
+  [^StructuredDiffGenerator generator path s]
+  (swap! (.state generator) assoc-in [:diffs :files path] s))
+
 (defn -displayFileDiff
   [^StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
+  (let [path (normalize-path path)]
+    (if (every? text? [mime1 mime2])
+      (set-diff! this  path (text-diff this path file1 file2 rev1 rev2 mime1 mime2))
+      (set-diff! this path "Can't compare binary files."))))
+
+(defn text-property
+  [^StructuredDiffGenerator generator path baseProps diff]
   (let [bs (baos)
-        path (normalize-path path)
-        _ (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
-        encoding (or (enc/detect (baos->bais bs)) 
-                   (.getEncoding this))]
-    (swap! (.state this) assoc-in [:diffs :files path] (.toString bs encoding))))
+        encoding (or (enc/detect (baos->bais bs)) (.getEncoding generator))]
+    (.parentDisplayPropDiff generator path baseProps diff bs)
+    (string/trim (.toString bs encoding))))
+
+(defn set-property!
+  [^StructuredDiffGenerator generator path s]
+  (swap! (.state generator) assoc-in [:diffs :properties path] s))
 
 (defn -displayPropDiff
   [^StructuredDiffGenerator this path baseProps diff os]
-  (let [bs (baos)
-        path (normalize-path path)]
-    (.parentDisplayPropDiff this path baseProps diff bs)
-    (swap! (.state this) assoc-in [:diffs :properties path] bs)))
+  (let [path (normalize-path path)]
+    (set-property! this path (text-property this path baseProps diff))))
 
 (defn -grabDiff
   [^StructuredDiffGenerator this]
