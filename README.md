@@ -1,15 +1,13 @@
 # subversion-clj [![Build Status](https://secure.travis-ci.org/dsabanin/subversion-clj.png)](http://travis-ci.org/dsabanin/subversion-clj)
 
-## Read-only Subversion access
+#### Clojure library for working with Subversion repositories
 
-This code is extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].
+This code is initially extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1]. 
+It's a work in progress, so be careful with updates to new versions. The API may change, although I'm trying to keep
+thing compatible.
 
-Right now this is just a read-only wrapper around Java's SVNKit that allows you to look
-into contents of local and remote repositories (no working copy needed). 
- 
-At this moment all this library can do is get unified information about all revisions or some particular revision
-in the repo. However I'm planning to extend this code as Beanstalk uses more Clojure code
-for performance critical parts
+Based on <a href="http://svnkit.com/">SVNKit</a>, tested with Subversion up to 1.7.9.
+
 
 [1] <a href="http://blog.beanstalkapp.com/post/23998022427/beanstalk-clojure-love-and-20x-better-performance">Post in Beanstalk's blog about this</a>
 
