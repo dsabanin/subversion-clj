@@ -3028,8 +3028,8 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.2.5</h2><br /><p>SVNKit based Subversion API for Clojure</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">org.apache.commons/commons-io</td><td class="dotted"><hr /></td><td class="dep-version">1.3.2</td></tr><tr><td class="dep-name">org.clojars.dsabanin/clj-det-enc</td><td class="dotted"><hr /></td><td class="dep-version">1.0.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diff-generator">subversion-clj.diff-generator</a></li><li><a href="#subversion-clj.local">subversion-clj.local</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
+</script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.3.1</h2><br /><p>SVNKit based Subversion API for Clojure</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.apache.commons/commons-io</td><td class="dotted"><hr /></td><td class="dep-version">1.3.2</td></tr><tr><td class="dep-name">org.clojars.dsabanin/clj-det-enc</td><td class="dotted"><hr /></td><td class="dep-version">1.0.0</td></tr></table></div><div class="dependencies"><h3>dev dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diff-generator">subversion-clj.diff-generator</a></li><li><a href="#subversion-clj.local">subversion-clj.local</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li><li><a href="#subversion-clj.wc">subversion-clj.wc</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
 
 <p>This code is extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].</p>
 
@@ -3064,7 +3064,13 @@ for performance critical parts</p>
 </td><td class="codes"><pre class="brush: clojure">(declare log-record node-kind node-kind-at-rev)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(DAVRepositoryFactory/setup)
 (SVNRepositoryFactoryImpl/setup)
-(FSRepositoryFactory/setup)</pre></td></tr><tr><td class="docs"><p>Creates an instance of SVNRepository subclass from a legitimate Subversion URL like:</p>
+(FSRepositoryFactory/setup)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn auth-manager
+  [name password]
+  (SVNWCUtil/createDefaultAuthenticationManager name password))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn svn-url
+  [uri]
+  (SVNURL/parseURIEncoded uri))</pre></td></tr><tr><td class="docs"><p>Creates an instance of SVNRepository subclass from a legitimate Subversion URL like:</p>
 
 <ul>
 <li><code>https://wildbit.svn.beanstalkapp.com/somerepo</code></li>
@@ -3085,13 +3091,13 @@ for performance critical parts</p>
 </code></pre></li>
 </ul>
 </td><td class="codes"><pre class="brush: clojure">(defn repo-for
-  (^SVNRepository [repo-path]
-    (SVNRepositoryFactory/create (SVNURL/parseURIEncoded repo-path)))
-  (^SVNRepository [repo-path name password]
-    (let [repo (repo-for repo-path)
-          auth-mgr (SVNWCUtil/createDefaultAuthenticationManager name password)]
-      (.setAuthenticationManager repo auth-mgr)
-      repo)))</pre></td></tr><tr><td class="docs"><p>Returns an array with all the revision records in the repository.</p>
+  (^SVNRepository [uri]
+    (SVNRepositoryFactory/create (svn-url uri)))
+  (^SVNRepository [uri name password]
+    (let [repo (repo-for uri)
+          auth-mgr (auth-manager name password)]
+      (doto repo
+        (.setAuthenticationManager auth-mgr)))))</pre></td></tr><tr><td class="docs"><p>Returns an array with all the revision records in the repository.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn revisions-for 
   [^SVNRepository repo]
   (-&gt;&gt; (.log repo (string-array) (linked-list) 1 -1 true false)
@@ -3171,12 +3177,19 @@ for performance critical parts</p>
   (SVNRevision/create (long revision)))</pre></td></tr><tr><td class="docs"><p>Youngest revision of a repository.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn youngest
   ^Long [^SVNRepository repo]
-  (.getLatestRevision repo))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diff-generator" name="subversion-clj.diff-generator"><h1 class="project-name">subversion-clj.diff-generator</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  (.getLatestRevision repo))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(comment
+  (def repo (repo-for &quot;http://svn.gna.org/svn/gnustep/trunk&quot;))
+  (def repo (repo-for &quot;file:///beanstalk/storage/gfs_4/4/acc_4/svn1&quot;))
+  (.getNumber (.getRevision (.doStatus (.getStatusClient (org.tmatesoft.svn.core.wc.SVNClientManager/newInstance (org.tmatesoft.svn.core.wc.SVNWCUtil/createDefaultOptions true))) 
+    (java.io.File. &quot;/tmp/tests/svn1&quot;)
+    false))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diff-generator" name="subversion-clj.diff-generator"><h1 class="project-name">subversion-clj.diff-generator</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.diff-generator
   (:use
     subversion-clj.utils)
   (:require
-    [hozumi.det-enc :as enc])
+    [hozumi.det-enc :as enc]
+    [clojure.string :as string])
   (:import 
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
     [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
@@ -3210,20 +3223,38 @@ for performance critical parts</p>
   ([^StructuredDiffGenerator this type path copyFromPath copyFromRevision result]
     (update-change-type this path (type-&gt;keyword type))
     false))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn binary?
+  [mime]
+  (= mime &quot;application/octet-stream&quot;))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def text? (complement binary?))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn text-diff
+  [^StructuredDiffGenerator generator path file1 file2 rev1 rev2 mime1 mime2]
+  (let [bs (baos)
+        encoding (or (enc/detect (baos-&gt;bais bs)) (.getEncoding generator))]
+    (.parentDisplayFileDiff generator path file1 file2 rev1 rev2 mime1 mime2 bs)
+    (.toString bs encoding)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn set-diff!
+  [^StructuredDiffGenerator generator path s]
+  (swap! (.state generator) assoc-in [:diffs :files path] s))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -displayFileDiff
   [^StructuredDiffGenerator this path file1 file2 rev1 rev2 mime1 mime2 os]
+  (let [path (normalize-path path)]
+    (if (every? text? [mime1 mime2])
+      (set-diff! this  path (text-diff this path file1 file2 rev1 rev2 mime1 mime2))
+      (set-diff! this path &quot;Can't compare binary files.&quot;))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn text-property
+  [^StructuredDiffGenerator generator path baseProps diff]
   (let [bs (baos)
-        path (normalize-path path)
-        _ (.parentDisplayFileDiff this path file1 file2 rev1 rev2 mime1 mime2 bs)
-        encoding (or (enc/detect (baos-&gt;bais bs)) 
-                   (.getEncoding this))]
-    (swap! (.state this) assoc-in [:diffs :files path] (.toString bs encoding))))</pre></td></tr><tr><td class="docs">
+        encoding (or (enc/detect (baos-&gt;bais bs)) (.getEncoding generator))]
+    (.parentDisplayPropDiff generator path baseProps diff bs)
+    (string/trim (.toString bs encoding))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn set-property!
+  [^StructuredDiffGenerator generator path s]
+  (swap! (.state generator) assoc-in [:diffs :properties path] s))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -displayPropDiff
   [^StructuredDiffGenerator this path baseProps diff os]
-  (let [bs (baos)
-        path (normalize-path path)]
-    (.parentDisplayPropDiff this path baseProps diff bs)
-    (swap! (.state this) assoc-in [:diffs :properties path] bs)))</pre></td></tr><tr><td class="docs">
+  (let [path (normalize-path path)]
+    (set-property! this path (text-property this path baseProps diff))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -grabDiff
   [^StructuredDiffGenerator this]
   (:diffs @(.state this)))</pre></td></tr><tr><td class="docs">
@@ -3235,7 +3266,7 @@ for performance critical parts</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.local
   (:require
-    [subversion-clj.core :as svn]
+    [subversion-clj.core :as core]
     subversion-clj.diff-generator)
   (:use
     subversion-clj.utils)
@@ -3256,13 +3287,21 @@ for performance critical parts</p>
 
 <p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn diff-for 
-  ([^SVNRepository repo revision]
-    (let [output (baos)]
-      (.doGetDiff (svnlook-client) (repo-dir repo) (svn/svn-revision revision) true true true output)
-      output))
-  ([^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
+  [^SVNRepository repo revision]
+  (let [output (baos)]
+    (.doGetDiff (svnlook-client) (repo-dir repo) (core/svn-revision revision) true true true output)
+    output))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision. Writes changes into a generator instance.</p>
+
+<p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
+</td><td class="codes"><pre class="brush: clojure">(defn diff-for!
+  [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
     (let [cli (doto (svnlook-client) (.setDiffGenerator generator))]
-      (.doGetDiff cli (repo-dir repo) (svn/svn-revision revision) true true true null-stream))))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision, structured as maps of maps.</p>
+      (.doGetDiff cli (repo-dir repo) (core/svn-revision revision) true true true null-stream))
+    generator)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn structured-generator
+  ^StructuredDiffGenerator []
+  (doto (StructuredDiffGenerator.)
+    (.setEncoding &quot;ISO-8859-1&quot;)))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision, structured as maps of maps.</p>
 
 <p>   Format of the returned map is:</p>
 
@@ -3275,10 +3314,10 @@ for performance critical parts</p>
 
 <p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn structured-diff-for
-  ([^SVNRepository repo revision]
-    (let [generator (doto (StructuredDiffGenerator.) (.setEncoding &quot;ISO-8859-1&quot;))]
-      (diff-for repo revision generator)
-      (.grabDiff generator))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.utils" name="subversion-clj.utils"><h1 class="project-name">subversion-clj.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  [^SVNRepository repo revision]
+  (let [generator (structured-generator)]
+    (diff-for! repo revision generator)
+    (.grabDiff generator)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.utils" name="subversion-clj.utils"><h1 class="project-name">subversion-clj.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.utils
   (:import
     [org.apache.commons.io.output NullOutputStream]
@@ -3300,5 +3339,63 @@ for performance critical parts</p>
   (into-array String []))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn linked-list
   ^LinkedList []
-  (LinkedList.))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (LinkedList.))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.wc" name="subversion-clj.wc"><h1 class="project-name">subversion-clj.wc</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.wc
+  (:require
+    [subversion-clj.core :as core]
+    [clojure.java.io :as io])
+  (:use
+    subversion-clj.utils)
+  (:import
+    [org.tmatesoft.svn.core.wc SVNClientManager SVNWCUtil]
+    [org.tmatesoft.svn.core SVNDepth]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn client-manager
+  ([]
+    (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
+  ([name password]
+    (SVNClientManager/newInstance 
+      (SVNWCUtil/createDefaultOptions true)
+      (core/auth-manager name password))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn status
+  ([cli-mgr wc-path]
+    (status cli-mgr wc-path false))
+  ([cli-mgr wc-path check-remote]
+    (-&gt; cli-mgr
+      (.getStatusClient)
+      (.doStatus (io/as-file wc-path) check-remote))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn checkout
+  ([cli-mgr uri wc-path revision]
+    (checkout cli-mgr uri wc-path revision true false))
+  ([cli-mgr uri wc-path revision recursive? ignore-externals?]
+    (let [cli (.getUpdateClient cli-mgr)]
+      (.setIgnoreExternals cli ignore-externals?)
+      (.doCheckout 
+        (core/svn-url uri) 
+        (io/as-file wc-path) 
+        (core/svn-revision revision) 
+        (core/svn-revision revision)
+        recursive?))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn switch
+  ([cli-mgr uri wc-path revision]
+    (switch cli-mgr uri wc-path revision true false))
+  ([cli-mgr uri wc-path revision recursive? ignore-externals?]
+    (let [cli (.getUpdateClient cli-mgr)]
+      (.setIgnoreExternals cli ignore-externals?)
+      (.doSwitch cli 
+        (io/as-file wc-path)
+        (core/svn-url uri)
+        (core/svn-revision revision)
+        recursive?))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn update
+  ([cli-mgr wc-path revision]
+    (update cli-mgr wc-path revision false))
+  ([cli-mgr wc-path revision ignore-externals?]
+    (let [cli (.getUpdateClient cli-mgr)]
+      (.setIgnoreExternals cli ignore-externals?)
+      (.doUpdate
+        (io/as-file wc-path)
+        (core/svn-revision revision)
+        SVNDepth/INFINITY
+        true
+        true))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>
