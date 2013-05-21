@@ -9,22 +9,25 @@
     [org.tmatesoft.svn.core SVNDepth]))
 
 (defn client-manager
+  "New SVNClientManager instance. Optional arguments are username and password for authenticated connections."
   ([]
     (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
-  ([name password]
+  ([username password]
     (SVNClientManager/newInstance 
       (SVNWCUtil/createDefaultOptions true)
-      (core/auth-manager name password))))
+      (core/auth-manager username password))))
 
 (defn status
+  "SVNStatus instance for wc-path. Optional argument check-remote? if status should include remote changes."
   ([cli-mgr wc-path]
     (status cli-mgr wc-path false))
-  ([cli-mgr wc-path check-remote]
+  ([cli-mgr wc-path check-remote?]
     (-> cli-mgr
       (.getStatusClient)
-      (.doStatus (io/as-file wc-path) check-remote))))
+      (.doStatus (io/as-file wc-path) check-remote?))))
 
 (defn checkout
+  "Create a new working copy. Optional arguments are recursive? and ignore-externals?"
   ([cli-mgr uri wc-path revision]
     (checkout cli-mgr uri wc-path revision true false))
   ([cli-mgr uri wc-path revision recursive? ignore-externals?]
@@ -38,6 +41,7 @@
         recursive?))))
 
 (defn switch
+  "Switch working copy to different URI. Optional arguments are recursive? and ignore-externals?"
   ([cli-mgr uri wc-path revision]
     (switch cli-mgr uri wc-path revision true false))
   ([cli-mgr uri wc-path revision recursive? ignore-externals?]
@@ -50,6 +54,7 @@
         recursive?))))
 
 (defn update
+  "Update existing working copy. Optional argument is ignore-externals?"
   ([cli-mgr wc-path revision]
     (update cli-mgr wc-path revision false))
   ([cli-mgr wc-path revision ignore-externals?]
