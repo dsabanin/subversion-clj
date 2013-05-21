@@ -3177,13 +3177,7 @@ for performance critical parts</p>
   (SVNRevision/create (long revision)))</pre></td></tr><tr><td class="docs"><p>Youngest revision of a repository.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn youngest
   ^Long [^SVNRepository repo]
-  (.getLatestRevision repo))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(comment
-  (def repo (repo-for &quot;http://svn.gna.org/svn/gnustep/trunk&quot;))
-  (def repo (repo-for &quot;file:///beanstalk/storage/gfs_4/4/acc_4/svn1&quot;))
-  (.getNumber (.getRevision (.doStatus (.getStatusClient (org.tmatesoft.svn.core.wc.SVNClientManager/newInstance (org.tmatesoft.svn.core.wc.SVNWCUtil/createDefaultOptions true))) 
-    (java.io.File. &quot;/tmp/tests/svn1&quot;)
-    false))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diff-generator" name="subversion-clj.diff-generator"><h1 class="project-name">subversion-clj.diff-generator</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  (.getLatestRevision repo))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diff-generator" name="subversion-clj.diff-generator"><h1 class="project-name">subversion-clj.diff-generator</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.diff-generator
   (:use
     subversion-clj.utils)
@@ -3348,21 +3342,21 @@ for performance critical parts</p>
     subversion-clj.utils)
   (:import
     [org.tmatesoft.svn.core.wc SVNClientManager SVNWCUtil]
-    [org.tmatesoft.svn.core SVNDepth]))</pre></td></tr><tr><td class="docs">
+    [org.tmatesoft.svn.core SVNDepth]))</pre></td></tr><tr><td class="docs"><p>New SVNClientManager instance. Optional arguments are username and password for authenticated connections.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn client-manager
   ([]
     (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
-  ([name password]
+  ([username password]
     (SVNClientManager/newInstance 
       (SVNWCUtil/createDefaultOptions true)
-      (core/auth-manager name password))))</pre></td></tr><tr><td class="docs">
+      (core/auth-manager username password))))</pre></td></tr><tr><td class="docs"><p>SVNStatus instance for wc-path. Optional argument check-remote? if status should include remote changes.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn status
   ([cli-mgr wc-path]
     (status cli-mgr wc-path false))
-  ([cli-mgr wc-path check-remote]
+  ([cli-mgr wc-path check-remote?]
     (-&gt; cli-mgr
       (.getStatusClient)
-      (.doStatus (io/as-file wc-path) check-remote))))</pre></td></tr><tr><td class="docs">
+      (.doStatus (io/as-file wc-path) check-remote?))))</pre></td></tr><tr><td class="docs"><p>Create a new working copy. Optional arguments are recursive? and ignore-externals?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn checkout
   ([cli-mgr uri wc-path revision]
     (checkout cli-mgr uri wc-path revision true false))
@@ -3374,7 +3368,7 @@ for performance critical parts</p>
         (io/as-file wc-path) 
         (core/svn-revision revision) 
         (core/svn-revision revision)
-        recursive?))))</pre></td></tr><tr><td class="docs">
+        recursive?))))</pre></td></tr><tr><td class="docs"><p>Switch working copy to different URI. Optional arguments are recursive? and ignore-externals?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn switch
   ([cli-mgr uri wc-path revision]
     (switch cli-mgr uri wc-path revision true false))
@@ -3385,7 +3379,7 @@ for performance critical parts</p>
         (io/as-file wc-path)
         (core/svn-url uri)
         (core/svn-revision revision)
-        recursive?))))</pre></td></tr><tr><td class="docs">
+        recursive?))))</pre></td></tr><tr><td class="docs"><p>Update existing working copy. Optional argument is ignore-externals?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn update
   ([cli-mgr wc-path revision]
     (update cli-mgr wc-path revision false))
