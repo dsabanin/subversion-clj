@@ -3,8 +3,8 @@
 ;; This code is extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].
 ;;
 ;; Right now this is just a read-only wrapper around Java's SVNKit that allows you to look
-;; into contents of local and remote repositories (no working copy needed). 
-;; 
+;; into contents of local and remote repositories (no working copy needed).
+;;
 ;; At this moment all this library can do is get unified information about all revisions or some particular revision
 ;; in the repo. However I'm planning to extend this code as Beanstalk uses more Clojure code
 ;; for performance critical parts
@@ -13,16 +13,16 @@
 ;;
 
 (ns subversion-clj.core
-  (:require 
+  (:require
     [clojure.string :as string]
     subversion-clj.diff-generator)
   (:use
     subversion-clj.utils)
-  (:import 
+  (:import
      [org.tmatesoft.svn.core.internal.io.fs FSRepositoryFactory FSPathChange]
      [org.tmatesoft.svn.core.internal.io.dav DAVRepositoryFactory]
      [org.tmatesoft.svn.core.internal.io.svn SVNRepositoryFactoryImpl]
-     [org.tmatesoft.svn.core.internal.util SVNHashMap SVNHashMap$TableEntry]     
+     [org.tmatesoft.svn.core.internal.util SVNHashMap SVNHashMap$TableEntry]
      [org.tmatesoft.svn.core SVNURL SVNLogEntry SVNLogEntryPath SVNException]
      [org.tmatesoft.svn.core.io SVNRepository SVNRepositoryFactory]
      [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision]
@@ -39,16 +39,18 @@
 (FSRepositoryFactory/setup)
 
 (defn auth-manager
-  [name password]
-  (SVNWCUtil/createDefaultAuthenticationManager name password))
+  "Creates username/password authenticated AuthenticationManager instance."
+  [username password]
+  (SVNWCUtil/createDefaultAuthenticationManager username password))
 
 (defn svn-url
+  "Returns new SVNURL instance."
   [uri]
   (SVNURL/parseURIEncoded uri))
 
 (defn repo-for
   "Creates an instance of SVNRepository subclass from a legitimate Subversion URL like:
-  
+
   * `https://wildbit.svn.beanstalkapp.com/somerepo`
   * `file:///storage/somerepo`
   * `svn://internal-server:3122/somerepo`
@@ -59,27 +61,27 @@
 
   Or like this:
 
-        (repo-for 
-          \"https://wildbit.svn.beanstalkapp.com/repo\" 
-          \"login\" 
+        (repo-for
+          \"https://wildbit.svn.beanstalkapp.com/repo\"
+          \"login\"
           \"pass\")"
   (^SVNRepository [uri]
     (SVNRepositoryFactory/create (svn-url uri)))
-  
+
   (^SVNRepository [uri name password]
     (let [repo (repo-for uri)
           auth-mgr (auth-manager name password)]
       (doto repo
         (.setAuthenticationManager auth-mgr)))))
 
-(defn revisions-for 
+(defn revisions-for
   "Returns an array with all the revision records in the repository."
   [^SVNRepository repo]
   (->> (.log repo (string-array) (linked-list) 1 -1 true false)
     (map (partial log-record repo))
     (into [])))
 
-(defn revision-for 
+(defn revision-for
   "Returns an individual revision record.
 
    Example record for a copied directory:
@@ -102,7 +104,7 @@
       first
       (log-record repo))))
 
-(defn node-kind 
+(defn node-kind
   "Returns kind of a node path at certain revision - file or directory."
   [repo path rev]
   (let [basename (.getName (File. ^String path))]
@@ -116,7 +118,7 @@
 (defn- node-kind-at-rev ^String [^SVNRepository repo ^String path ^Long rev]
   (.. (.checkPath repo path rev) toString))
 
-(def letter->change-sym 
+(def letter->change-sym
   {\A :add
    \M :edit
    \D :delete
@@ -129,15 +131,15 @@
       (letter->change-sym change-letter)
       :copy)))
 
-(defn- detailed-path 
+(defn- detailed-path
   [repo rev log-record ^SVNHashMap$TableEntry path-record]
   (let [path (normalize-path (.getKey path-record))
         change-rec ^FSPathChange (.getValue path-record)
         node-kind (node-kind repo path rev)
         change-kind (change-kind change-rec)]
-    (cond 
-      (= change-kind :copy) [node-kind 
-                             [path, (normalize-path (.getCopyPath change-rec)), (.getCopyRevision change-rec)] 
+    (cond
+      (= change-kind :copy) [node-kind
+                             [path, (normalize-path (.getCopyPath change-rec)), (.getCopyRevision change-rec)]
                              change-kind]
       :else [node-kind path change-kind])))
 
