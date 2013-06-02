@@ -4,7 +4,7 @@
   (:require
     [hozumi.det-enc :as enc]
     [clojure.string :as string])
-  (:import 
+  (:import
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator]
     [org.tmatesoft.svn.core.internal.wc DefaultSVNGNUDiffGenerator]
     [java.io ByteArrayOutputStream]
@@ -20,7 +20,8 @@
     :methods [[grabDiff [] clojure.lang.IObj]
               [grabFileChanges [] clojure.lang.IObj]]))
 
-(defn -construct []
+(defn -construct
+  []
   [[] (atom {:diffs {:files {}
                      :properties {}}
              :changes {}})])
@@ -36,15 +37,14 @@
   (let [path (normalize-path path)]
     (swap! (.state generator) assoc-in [:changes path] type)))
 
-(defn -displayHeader 
-  ([^StructuredDiffGenerator this os path deleted] false)
+(defn -displayHeader
+  ([^StructuredDiffGenerator this os path deleted]
+     false)
   ([^StructuredDiffGenerator this type path copyFromPath copyFromRevision result]
-    (update-change-type this path (type->keyword type))
-    false))
+     (update-change-type this path (type->keyword type))
+     false))
 
-(defn binary?
-  [mime]
-  (= mime "application/octet-stream"))
+(def binary? (partial = "application/octet-stream"))
 
 (def text? (complement binary?))
 
