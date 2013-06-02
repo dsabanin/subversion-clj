@@ -13,7 +13,7 @@
 ;;
 
 (ns subversion-clj.core
-  (:require
+    (:require
     [clojure.string :as string]
     subversion-clj.diff-generator)
   (:use
@@ -66,20 +66,21 @@
           \"login\"
           \"pass\")"
   (^SVNRepository [uri]
-    (SVNRepositoryFactory/create (svn-url uri)))
+                  (SVNRepositoryFactory/create (svn-url uri)))
 
-  (^SVNRepository [uri name password]
-    (let [repo (repo-for uri)
-          auth-mgr (auth-manager name password)]
-      (doto repo
-        (.setAuthenticationManager auth-mgr)))))
+  (^SVNRepository [uri username password]
+                  (let [repo (repo-for uri)
+                        auth-mgr (auth-manager username password)]
+                    (doto repo
+                      (.setAuthenticationManager auth-mgr)))))
 
 (defn revisions-for
   "Returns an array with all the revision records in the repository."
   [^SVNRepository repo]
   (->> (.log repo (string-array) (linked-list) 1 -1 true false)
-    (map (partial log-record repo))
-    (into [])))
+       (map (partial log-record repo))
+       (into [])))
+
 
 (defn revision-for
   "Returns an individual revision record.
@@ -104,18 +105,27 @@
       first
       (log-record repo))))
 
+(defn- basename
+  [path]
+  (.getName (File. ^String path)))
+
+(defn- path-is-file?
+  "Estimation check, for performance."
+  [path]
+  (neg? (.indexOf (basename path) ".")))
+
 (defn node-kind
   "Returns kind of a node path at certain revision - file or directory."
   [repo path rev]
-  (let [basename (.getName (File. ^String path))]
-    (if (neg? (.indexOf basename "."))
-      (let [node-kind-at-current-rev (node-kind-at-rev repo path rev)]
-        (if (= "none" node-kind-at-current-rev)
-          (node-kind-at-rev repo path (dec rev))
-          node-kind-at-current-rev))
-      "file")))
+  (if (path-is-file? path)
+    (let [node-kind-at-current-rev (node-kind-at-rev repo path rev)]
+      (if (= "none" node-kind-at-current-rev)
+        (node-kind-at-rev repo path (dec rev))
+        node-kind-at-current-rev))
+    "file"))
 
-(defn- node-kind-at-rev ^String [^SVNRepository repo ^String path ^Long rev]
+(defn- node-kind-at-rev ^String
+  [^SVNRepository repo ^String path ^Long rev]
   (.. (.checkPath repo path rev) toString))
 
 (def letter->change-sym
@@ -124,7 +134,8 @@
    \D :delete
    \R :replace})
 
-(defn- change-kind [^SVNLogEntryPath change-rec]
+(defn- change-kind
+  [^SVNLogEntryPath change-rec]
   (let [change-letter (.getType change-rec)
         copy-rev (.getCopyRevision change-rec)]
     (if (neg? copy-rev)
@@ -138,15 +149,17 @@
         node-kind (node-kind repo path rev)
         change-kind (change-kind change-rec)]
     (cond
-      (= change-kind :copy) [node-kind
-                             [path, (normalize-path (.getCopyPath change-rec)), (.getCopyRevision change-rec)]
-                             change-kind]
-      :else [node-kind path change-kind])))
+     (= change-kind :copy) [node-kind
+                            [path, (normalize-path (.getCopyPath change-rec)), (.getCopyRevision change-rec)]
+                            change-kind]
+     :else [node-kind path change-kind])))
 
-(defn- changed-paths [repo rev ^SVNLogEntry log-obj]
+(defn- changed-paths
+  [repo rev ^SVNLogEntry log-obj]
   (if (= rev (long 0))
     []
-    (map (partial detailed-path repo rev log-record) ^SVNHashMap (.getChangedPaths log-obj))))
+    (map (partial detailed-path repo rev log-record)
+         ^SVNHashMap (.getChangedPaths log-obj))))
 
 (defn- log-record [repo ^SVNLogEntry log-obj]
   (let [revision (.getRevision log-obj)
