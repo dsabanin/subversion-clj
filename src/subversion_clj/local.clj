@@ -13,7 +13,8 @@
     [subversion.clj StructuredDiffGenerator]
     [java.io File ByteArrayOutputStream]
     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision]
-    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
+    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]
+    [org.tmatesoft.svn.core.wc SVNDiffOptions]))
 
 (defn svnlook-client 
   ^SVNLookClient []
@@ -51,6 +52,11 @@ _Works only with repo object pointing to a local repo directory (not working cop
    
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   ([^SVNRepository repo revision]
-    (let [generator (doto (StructuredDiffGenerator.) (.setEncoding "ISO-8859-1"))]
+    (structured-diff-for repo revision false))
+  ([^SVNRepository repo revision ignore-whitespace?]
+    (let [generator (doto (StructuredDiffGenerator.)
+                      (.setEncoding "ISO-8859-1")
+                      (.setDiffOptions
+                        (new SVNDiffOptions ignore-whitespace? false false)))]
       (diff-for repo revision generator)
       (.grabDiff generator))))
