@@ -13,7 +13,7 @@
   ([]
     (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
   ([username password]
-    (SVNClientManager/newInstance 
+    (SVNClientManager/newInstance
       (SVNWCUtil/createDefaultOptions true)
       (core/auth-manager username password))))
 
@@ -22,47 +22,31 @@
   ([cli-mgr wc-path]
     (status cli-mgr wc-path false))
   ([cli-mgr wc-path check-remote?]
-    (-> cli-mgr
-      (.getStatusClient)
+    (doto (.getStatusClient cli-mgr)
       (.doStatus (io/as-file wc-path) check-remote?))))
 
 (defn checkout
   "Create a new working copy. Optional arguments are recursive? and ignore-externals?"
   ([cli-mgr uri wc-path revision]
-    (checkout cli-mgr uri wc-path revision true false))
+     (checkout cli-mgr uri wc-path revision true false))
   ([cli-mgr uri wc-path revision recursive? ignore-externals?]
-    (let [cli (.getUpdateClient cli-mgr)]
-      (.setIgnoreExternals cli ignore-externals?)
-      (.doCheckout 
-        (core/svn-url uri) 
-        (io/as-file wc-path) 
-        (core/svn-revision revision) 
-        (core/svn-revision revision)
-        recursive?))))
+     (doto (.getUpdateClient cli-mgr)
+       (.setIgnoreExternals ignore-externals?)
+       (.doCheckout (core/svn-url uri)
+                    (io/as-file wc-path)
+                    (core/svn-revision revision)
+                    (core/svn-revision revision)
+                    recursive?))))
 
 (defn switch
   "Switch working copy to different URI. Optional arguments are recursive? and ignore-externals?"
   ([cli-mgr uri wc-path revision]
-    (switch cli-mgr uri wc-path revision true false))
+     (switch cli-mgr uri wc-path revision true false))
   ([cli-mgr uri wc-path revision recursive? ignore-externals?]
-    (let [cli (.getUpdateClient cli-mgr)]
-      (.setIgnoreExternals cli ignore-externals?)
-      (.doSwitch cli 
-        (io/as-file wc-path)
-        (core/svn-url uri)
-        (core/svn-revision revision)
-        recursive?))))
-
-(defn update
-  "Update existing working copy. Optional argument is ignore-externals?"
-  ([cli-mgr wc-path revision]
-    (update cli-mgr wc-path revision false))
-  ([cli-mgr wc-path revision ignore-externals?]
-    (let [cli (.getUpdateClient cli-mgr)]
-      (.setIgnoreExternals cli ignore-externals?)
-      (.doUpdate
-        (io/as-file wc-path)
-        (core/svn-revision revision)
-        SVNDepth/INFINITY
-        true
-        true))))
+     (doto (.getUpdateClient cli-mgr)
+       (.setIgnoreExternals ignore-externals?)
+       (.doUpdate (io/as-file wc-path)
+                  (core/svn-revision revision)
+                  SVNDepth/INFINITY
+                  true
+                  true))))
