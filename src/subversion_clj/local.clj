@@ -40,8 +40,9 @@ _Works only with repo object pointing to a local repo directory (not working cop
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
-  (let [cli (doto (svnlook-client) (.setDiffGenerator generator))]
-    (.doGetDiff cli (repo-dir repo) (core/svn-revision revision) true true true null-stream))
+  (doto (svnlook-client)
+    (.setDiffGenerator generator)
+    (.doGetDiff (repo-dir repo) (core/svn-revision revision) true true true null-stream))
   generator)
 
 (defn diff-options
