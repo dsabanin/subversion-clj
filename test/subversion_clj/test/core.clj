@@ -138,6 +138,42 @@
 
 "))
 
+(fact "structured-diff-for should get a diff for a revision and ignores whitespace"
+  (let [repo mock-repo
+        diff (local/structured-diff-for repo 14 true)]
+    (keys diff) => [:files :properties]
+    (keys (:files diff)) => ["INSTALL"]
+    (:properties diff) => {}
+    (str ((:files diff) "INSTALL")) => "--- /INSTALL\t2013-06-18 20:38:16 UTC (rev 13)
++++ /INSTALL\t2013-06-18 20:38:44 UTC (rev 14)
+@@ -1,6 +1,4 @@
+ ## INSTALL      
+ 
+ You can install to the latest
+-  
+   version directly from the internet
+-  
+\\ No newline at end of file
+
+"))
+
+(fact "structured-diff-for should get a diff for a revision and doesn't ignores whitespace"
+  (let [repo mock-repo
+        diff (local/structured-diff-for repo 14 true)]
+    (keys diff) => [:files :properties]
+    (keys (:files diff)) => ["INSTALL"]
+    (:properties diff) => {}
+    (str ((:files diff) "INSTALL")) => "--- /INSTALL\t2013-06-18 20:38:16 UTC (rev 13)
++++ /INSTALL\t2013-06-18 20:38:44 UTC (rev 14)
+@@ -1,6 +1,4 @@
+ ## INSTALL      \n \n You can install to the latest
+-  
+   version directly from the internet
+-  
+\\ No newline at end of file
+
+"))
+
 (fact "structured-diff-for should get a diff for a revision"
   (let [repo mock-repo
         diff (local/structured-diff-for repo 1)]
