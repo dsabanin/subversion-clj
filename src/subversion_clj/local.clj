@@ -40,9 +40,9 @@ _Works only with repo object pointing to a local repo directory (not working cop
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
-    (let [cli (doto (svnlook-client) (.setDiffGenerator generator))]
-      (.doGetDiff cli (repo-dir repo) (core/svn-revision revision) true true true null-stream))
-    generator)
+  (let [cli (doto (svnlook-client) (.setDiffGenerator generator))]
+    (.doGetDiff cli (repo-dir repo) (core/svn-revision revision) true true true null-stream))
+  generator)
 
 (defn diff-options
   [ignore-whitespace? ignore-amount-whitespace? ignore-eol-style?]
@@ -61,17 +61,17 @@ _Works only with repo object pointing to a local repo directory (not working cop
 
    Format of the returned map is:
 
-         {:files 
+         {:files
             {\"dir-a/file1\" ByteArrayOutputStream
              \"dir-b/file2\" ByteArrayOutputStream}
-          :properties 
+          :properties
             {\"dir-a/file1\" ByteArrayOutputStream}}
-   
+
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   ([^SVNRepository repo revision]
-    (structured-diff-for repo revision false))
+     (structured-diff-for repo revision false))
 
   ([^SVNRepository repo revision ignore-whitespace?]
-    (let [generator (structured-generator ignore-whitespace?)]
-      (diff-for! repo revision generator)
-      (.grabDiff generator))))
+     (let [generator (structured-generator ignore-whitespace?)]
+       (diff-for! repo revision generator)
+       (.grabDiff generator))))
