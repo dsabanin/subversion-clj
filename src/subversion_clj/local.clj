@@ -8,15 +8,14 @@
     subversion-clj.diff-generator)
   (:use
     subversion-clj.utils)
-  (:import 
+  (:import
     [org.tmatesoft.svn.core.io SVNRepository]
     [subversion.clj StructuredDiffGenerator]
     [java.io File ByteArrayOutputStream]
-    [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision]
-    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]
-    [org.tmatesoft.svn.core.wc SVNDiffOptions]))
+    [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision SVNDiffOptions]
+    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
-(defn svnlook-client 
+(defn svnlook-client
   ^SVNLookClient []
   (let [opts (SVNWCUtil/createDefaultOptions true)
         cm (SVNClientManager/newInstance opts)]
