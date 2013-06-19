@@ -13,7 +13,8 @@
     [subversion.clj StructuredDiffGenerator]
     [java.io File ByteArrayOutputStream]
     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision]
-    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
+    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]
+    [org.tmatesoft.svn.core.wc SVNDiffOptions]))
 
 (defn svnlook-client 
   ^SVNLookClient []
@@ -45,9 +46,13 @@ _Works only with repo object pointing to a local repo directory (not working cop
     generator)
 
 (defn structured-generator
-  ^StructuredDiffGenerator []
+  ([] (structured-generator false))
+
+  ([ignore-whitespace?]
   (doto (StructuredDiffGenerator.)
-    (.setEncoding "ISO-8859-1")))
+    (.setEncoding "ISO-8859-1")
+    (.setDiffOptions
+      (new SVNDiffOptions ignore-whitespace? false false)))))
 
 (defn structured-diff-for
   "File and property changes for a given revision, structured as maps of maps.
@@ -61,7 +66,10 @@ _Works only with repo object pointing to a local repo directory (not working cop
             {\"dir-a/file1\" ByteArrayOutputStream}}
    
 _Works only with repo object pointing to a local repo directory (not working copy)._"
-  [^SVNRepository repo revision]
-  (let [generator (structured-generator)]
-    (diff-for! repo revision generator)
-    (.grabDiff generator)))
+  ([^SVNRepository repo revision]
+    (structured-diff-for repo revision false))
+
+  ([^SVNRepository repo revision ignore-whitespace?]
+    (let [generator (structured-generator ignore-whitespace?)]
+      (diff-for! repo revision generator)
+      (.grabDiff generator))))
