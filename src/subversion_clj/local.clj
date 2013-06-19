@@ -26,7 +26,7 @@
   ^File [^SVNRepository repo]
   (File. (.. repo getLocation getPath)))
 
-(defn diff-for 
+(defn diff-for
   "File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
@@ -44,14 +44,17 @@ _Works only with repo object pointing to a local repo directory (not working cop
       (.doGetDiff cli (repo-dir repo) (core/svn-revision revision) true true true null-stream))
     generator)
 
-(defn structured-generator
-  ([] (structured-generator false))
+(defn diff-options
+  [ignore-whitespace? ignore-amount-whitespace? ignore-eol-style?]
+  (SVNDiffOptions. ignore-whitespace? ignore-amount-whitespace? ignore-eol-style?))
 
+(defn structured-generator
+  ([]
+     (structured-generator false))
   ([ignore-whitespace?]
-  (doto (StructuredDiffGenerator.)
-    (.setEncoding "ISO-8859-1")
-    (.setDiffOptions
-      (new SVNDiffOptions ignore-whitespace? false false)))))
+     (doto (StructuredDiffGenerator.)
+       (.setEncoding "ISO-8859-1")
+       (.setDiffOptions (diff-options ignore-whitespace? false false)))))
 
 (defn structured-diff-for
   "File and property changes for a given revision, structured as maps of maps.
