@@ -11,4 +11,5 @@
                              [lein-marginalia "0.7.1"]]}}
   :repositories {"tmatesoft" "http://maven.tmatesoft.com/content/repositories/releases/"
                  "stuartsierra-releases" "http://stuartsierra.com/maven2"}
-  :aot [subversion-clj.diff-generator])
+  :aot [subversion-clj.diff-generator]
+  :jvm-opts ["-Djava.awt.headless=true"])
