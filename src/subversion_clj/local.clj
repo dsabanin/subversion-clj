@@ -15,11 +15,13 @@
     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision SVNDiffOptions]
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
+(defonce svnclient-manager
+  (let [opts (SVNWCUtil/createDefaultOptions true)]
+    (SVNClientManager/newInstance opts)))
+
 (defn svnlook-client
   ^SVNLookClient []
-  (let [opts (SVNWCUtil/createDefaultOptions true)
-        cm (SVNClientManager/newInstance opts)]
-    (.getLookClient cm)))
+  (.getLookClient svnclient-manager))
 
 (defn repo-dir
   "File instance for a repository directory."
