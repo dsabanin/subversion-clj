@@ -50,3 +50,10 @@
                   SVNDepth/INFINITY
                   true
                   true))))
+
+(defn current-revision
+  [cli-mgr wc-path]
+  (let [status (status cli-mgr wc-path)
+        revision (.getRevision status)]
+    (when revision
+      (.getNumber revision))))
