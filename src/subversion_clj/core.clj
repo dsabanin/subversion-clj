@@ -109,16 +109,16 @@
   [path]
   (.getName (File. ^String path)))
 
-(defn- path-is-dir?
+(defn- path-is-file?
   "Estimation check, for performance."
   [path]
-  (neg? (.indexOf (basename path) ".")))
+  (not (neg? (.indexOf (basename path) "."))))
 
 (defn node-kind
   "Returns kind of a node path at certain revision - file or directory."
   [repo path rev]
-  (if (path-is-dir? path)
-    "dir"
+  (if (path-is-file? path)
+    "file"
     (let [node-kind-at-current-rev (node-kind-at-rev repo path rev)]
       (if (= "none" node-kind-at-current-rev)
         (node-kind-at-rev repo path (dec rev))
