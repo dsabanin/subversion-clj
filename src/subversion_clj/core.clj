@@ -180,3 +180,7 @@
   "Youngest revision of a repository."
   ^Long [^SVNRepository repo]
   (.getLatestRevision repo))
+
+(defn uuid
+  [^SVNRepository repo]
+  (.getRepositoryUUID repo))
