@@ -192,3 +192,8 @@
         gen (local/diff-for! repo 11 (StructuredDiffGenerator.))]
     (.grabFileChanges gen) => {"commit1" :edit
                                "commit3" :edit}))
+
+(fact "structured diff generator has properties correctly"
+  (let [cmd "/usr/local/bin/wdiff"
+        generator (local/structured-generator true cmd)]
+    (.getExternalDiffCommand generator) => cmd))
