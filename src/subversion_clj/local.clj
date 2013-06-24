@@ -53,11 +53,14 @@ _Works only with repo object pointing to a local repo directory (not working cop
 
 (defn structured-generator
   ([]
-     (structured-generator false))
+    (structured-generator false))
   ([ignore-whitespace?]
-     (doto (StructuredDiffGenerator.)
-       (.setEncoding "ISO-8859-1")
-       (.setDiffOptions (diff-options ignore-whitespace? false false)))))
+    (structured-generator ignore-whitespace? nil))
+  ([ignore-whitespace? external-diff-command]
+    (doto (StructuredDiffGenerator.)
+     (.setEncoding "ISO-8859-1")
+     (.setDiffOptions (diff-options ignore-whitespace? false false))
+     (.setExternalDiffCommand external-diff-command))))
 
 (defn structured-diff-for
   "File and property changes for a given revision, structured as maps of maps.
@@ -72,9 +75,9 @@ _Works only with repo object pointing to a local repo directory (not working cop
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   ([^SVNRepository repo revision]
-     (structured-diff-for repo revision false))
+    (structured-diff-for repo revision false))
 
   ([^SVNRepository repo revision ignore-whitespace?]
-     (let [generator (structured-generator ignore-whitespace?)]
-       (diff-for! repo revision generator)
-       (.grabDiff generator))))
+    (let [generator (structured-generator ignore-whitespace?)]
+      (diff-for! repo revision generator)
+      (.grabDiff generator))))
