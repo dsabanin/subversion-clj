@@ -76,10 +76,12 @@
 
 (defn revisions-for
   "Returns an array with all the revision records in the repository."
-  [^SVNRepository repo]
-  (->> (.log repo (string-array) (linked-list) 1 -1 true false)
-       (map (partial log-record repo))
-       (into [])))
+  ([^SVNRepository repo]
+     (revisions-for repo (string-array) 1 -1))
+  ([^SVNRepository repo paths from-rev to-rev]
+     (->> (.log repo paths (linked-list) from-rev to-rev true false)
+          (map #(log-record repo %))
+          (into []))))
 
 
 (defn revision-for
