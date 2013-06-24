@@ -5,8 +5,8 @@
     [java.util LinkedList]))
 
 (defn normalize-path ^String [^String path]
-  (if (.startsWith path "/") 
-    (if (= path "/") path (.substring path 1)) 
+  (if (.startsWith path "/")
+    (if (= path "/") path (.substring path 1))
     path))
 
 (defn baos
