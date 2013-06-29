@@ -160,7 +160,7 @@
   [repo rev ^SVNLogEntry log-obj]
   (if (= rev (long 0))
     []
-    (map (partial detailed-path repo rev log-record)
+    (map #(detailed-path repo rev log-record %)
          ^SVNHashMap (.getChangedPaths log-obj))))
 
 (defn- log-record [repo ^SVNLogEntry log-obj]
