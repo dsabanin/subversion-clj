@@ -15,13 +15,24 @@
     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision SVNDiffOptions]
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
-(defonce svnclient-manager
+(defn svnclient-manager
+  []
   (let [opts (SVNWCUtil/createDefaultOptions true)]
     (SVNClientManager/newInstance opts)))
 
+(declare ^:dynamic *manager*)
+
+(defmacro with-client-manager
+  [& body]
+  `(binding [*manager* (svnclient-manager)]
+     (try
+       ~@body
+       (finally
+         (.dispose *manager*)))))
+
 (defn svnlook-client
   ^SVNLookClient []
-  (.getLookClient svnclient-manager))
+  (.getLookClient *manager*))
 
 (defn repo-dir
   "File instance for a repository directory."
@@ -33,18 +44,20 @@
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision]
-  (let [output (baos)]
-    (.doGetDiff (svnlook-client) (repo-dir repo) (core/svn-revision revision) true true true output)
-    output))
+  (with-client-manager
+    (let [output (baos)]
+      (.doGetDiff (svnlook-client) (repo-dir repo) (core/svn-revision revision) true true true output)
+      output)))
 
 (defn diff-for!
   "File and property changes for a given revision. Writes changes into a generator instance.
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
-  (doto (svnlook-client)
-    (.setDiffGenerator generator)
-    (.doGetDiff (repo-dir repo) (core/svn-revision revision) true true true null-stream))
+  (with-client-manager
+    (doto (svnlook-client)
+      (.setDiffGenerator generator)
+      (.doGetDiff (repo-dir repo) (core/svn-revision revision) true true true null-stream)))
   generator)
 
 (defn diff-options
