@@ -15,21 +15,6 @@
     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision SVNDiffOptions]
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
-(defn svnclient-manager
-  []
-  (let [opts (SVNWCUtil/createDefaultOptions true)]
-    (SVNClientManager/newInstance opts)))
-
-(declare ^:dynamic *manager*)
-
-(defmacro with-client-manager
-  [& body]
-  `(binding [*manager* (svnclient-manager)]
-     (try
-       ~@body
-       (finally
-         (.dispose *manager*)))))
-
 (defn svnlook-client
   ^SVNLookClient []
   (.getLookClient *manager*))

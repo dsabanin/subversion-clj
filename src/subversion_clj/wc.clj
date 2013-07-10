@@ -8,15 +8,6 @@
     [org.tmatesoft.svn.core.wc SVNClientManager SVNWCUtil]
     [org.tmatesoft.svn.core SVNDepth]))
 
-(defn client-manager
-  "New SVNClientManager instance. Optional arguments are username and password for authenticated connections."
-  ([]
-    (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
-  ([username password]
-    (SVNClientManager/newInstance
-      (SVNWCUtil/createDefaultOptions true)
-      (core/auth-manager username password))))
-
 (defn status
   "SVNStatus instance for wc-path. Optional argument check-remote? if status should include remote changes."
   ([cli-mgr wc-path]

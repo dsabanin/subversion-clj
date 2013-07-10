@@ -186,3 +186,22 @@
 (defn uuid
   [^SVNRepository repo]
   (.getRepositoryUUID repo))
+
+(defn client-manager
+  "New SVNClientManager instance. Optional arguments are username and password for authenticated connections."
+  ([]
+    (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
+  ([username password]
+    (SVNClientManager/newInstance
+      (SVNWCUtil/createDefaultOptions true)
+      (auth-manager username password))))
+
+(declare ^:dynamic *client-manager*)
+
+(defmacro with-client-manager
+  [args & body]
+  `(binding [*client-manager* (apply client-manager ~args)]
+     (try
+       ~@body
+       (finally
+         (.dispose *client-manager*)))))
