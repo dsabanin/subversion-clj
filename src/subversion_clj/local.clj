@@ -16,8 +16,9 @@
     [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
 (defn svnlook-client
+  "Return SVNLookClient instance. Requires with-client-manager macro around it."
   ^SVNLookClient []
-  (.getLookClient *manager*))
+  (.getLookClient core/*client-manager*))
 
 (defn repo-dir
   "File instance for a repository directory."
@@ -29,7 +30,7 @@
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision]
-  (with-client-manager
+  (core/with-client-manager
     (let [output (baos)]
       (.doGetDiff (svnlook-client) (repo-dir repo) (core/svn-revision revision) true true true output)
       output)))
@@ -39,7 +40,7 @@ _Works only with repo object pointing to a local repo directory (not working cop
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
   [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
-  (with-client-manager
+  (core/with-client-manager
     (doto (svnlook-client)
       (.setDiffGenerator generator)
       (.doGetDiff (repo-dir repo) (core/svn-revision revision) true true true null-stream)))
