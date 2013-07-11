@@ -3028,8 +3028,8 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.3.11</h2><br /><p>SVNKit based Subversion API for Clojure</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.apache.commons/commons-io</td><td class="dotted"><hr /></td><td class="dep-version">1.3.2</td></tr><tr><td class="dep-name">org.clojars.dsabanin/clj-det-enc</td><td class="dotted"><hr /></td><td class="dep-version">1.0.0</td></tr><tr><td class="dep-name">org.clojure/core.typed</td><td class="dotted"><hr /></td><td class="dep-version">0.1.17</td></tr></table></div><div class="dependencies"><h3>dev dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diff-generator">subversion-clj.diff-generator</a></li><li><a href="#subversion-clj.local">subversion-clj.local</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li><li><a href="#subversion-clj.wc">subversion-clj.wc</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
+</script><title>subversion-clj -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">subversion-clj</h1><h2 class="project-version">0.4.0-SNAPSHOT</h2><br /><p>SVNKit based Subversion API for Clojure</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.tmatesoft.svnkit/svnkit</td><td class="dotted"><hr /></td><td class="dep-version">1.7.9</td></tr><tr><td class="dep-name">org.apache.commons/commons-io</td><td class="dotted"><hr /></td><td class="dep-version">1.3.2</td></tr><tr><td class="dep-name">org.clojars.dsabanin/clj-det-enc</td><td class="dotted"><hr /></td><td class="dep-version">1.0.0</td></tr><tr><td class="dep-name">org.clojure/core.typed</td><td class="dotted"><hr /></td><td class="dep-version">0.1.17</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#subversion-clj.core">subversion-clj.core</a></li><li><a href="#subversion-clj.diff-generator">subversion-clj.diff-generator</a></li><li><a href="#subversion-clj.local">subversion-clj.local</a></li><li><a href="#subversion-clj.utils">subversion-clj.utils</a></li><li><a href="#subversion-clj.wc">subversion-clj.wc</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.core" name="subversion-clj.core"><h1 class="project-name">subversion-clj.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Read-only Subversion access</h2>
 
 <p>This code is extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].</p>
 
@@ -3191,7 +3191,22 @@ for performance critical parts</p>
   (.getLatestRevision repo))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn uuid
   [^SVNRepository repo]
-  (.getRepositoryUUID repo))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diff-generator" name="subversion-clj.diff-generator"><h1 class="project-name">subversion-clj.diff-generator</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  (.getRepositoryUUID repo))</pre></td></tr><tr><td class="docs"><p>New SVNClientManager instance. Optional arguments are username and password for authenticated connections.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn client-manager
+  ([]
+    (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
+  ([username password]
+    (SVNClientManager/newInstance
+      (SVNWCUtil/createDefaultOptions true)
+      (auth-manager username password))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(declare ^:dynamic *client-manager*)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defmacro with-client-manager
+  [args &amp; body]
+  `(binding [*client-manager* (apply client-manager ~args)]
+     (try
+       ~@body
+       (finally
+         (.dispose *client-manager*)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diff-generator" name="subversion-clj.diff-generator"><h1 class="project-name">subversion-clj.diff-generator</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.diff-generator
   (:use
     subversion-clj.utils)
@@ -3283,22 +3298,10 @@ for performance critical parts</p>
     [subversion.clj StructuredDiffGenerator]
     [java.io File ByteArrayOutputStream]
     [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision SVNDiffOptions]
-    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn svnclient-manager
-  []
-  (let [opts (SVNWCUtil/createDefaultOptions true)]
-    (SVNClientManager/newInstance opts)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(declare ^:dynamic *manager*)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmacro with-client-manager
-  [&amp; body]
-  `(binding [*manager* (svnclient-manager)]
-     (try
-       ~@body
-       (finally
-         (.dispose *manager*)))))</pre></td></tr><tr><td class="docs">
+    [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))</pre></td></tr><tr><td class="docs"><p>Return SVNLookClient instance. Requires with-client-manager macro around it.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn svnlook-client
   ^SVNLookClient []
-  (.getLookClient *manager*))</pre></td></tr><tr><td class="docs"><p>File instance for a repository directory.</p>
+  (.getLookClient core/*client-manager*))</pre></td></tr><tr><td class="docs"><p>File instance for a repository directory.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn repo-dir
   ^File [^SVNRepository repo]
   (File. (.. repo getLocation getPath)))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.</p>
@@ -3306,7 +3309,7 @@ for performance critical parts</p>
 <p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn diff-for
   [^SVNRepository repo revision]
-  (with-client-manager
+  (core/with-client-manager
     (let [output (baos)]
       (.doGetDiff (svnlook-client) (repo-dir repo) (core/svn-revision revision) true true true output)
       output)))</pre></td></tr><tr><td class="docs"><p>File and property changes for a given revision. Writes changes into a generator instance.</p>
@@ -3314,7 +3317,7 @@ for performance critical parts</p>
 <p><em>Works only with repo object pointing to a local repo directory (not working copy).</em></p>
 </td><td class="codes"><pre class="brush: clojure">(defn diff-for!
   [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
-  (with-client-manager
+  (core/with-client-manager
     (doto (svnlook-client)
       (.setDiffGenerator generator)
       (.doGetDiff (repo-dir repo) (core/svn-revision revision) true true true null-stream)))
@@ -3380,45 +3383,38 @@ for performance critical parts</p>
     subversion-clj.utils)
   (:import
     [org.tmatesoft.svn.core.wc SVNClientManager SVNWCUtil]
-    [org.tmatesoft.svn.core SVNDepth]))</pre></td></tr><tr><td class="docs"><p>New SVNClientManager instance. Optional arguments are username and password for authenticated connections.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn client-manager
-  ([]
-    (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
-  ([username password]
-    (SVNClientManager/newInstance
-      (SVNWCUtil/createDefaultOptions true)
-      (core/auth-manager username password))))</pre></td></tr><tr><td class="docs"><p>SVNStatus instance for wc-path. Optional argument check-remote? if status should include remote changes.</p>
+    [org.tmatesoft.svn.core SVNDepth]))</pre></td></tr><tr><td class="docs"><p>SVNStatus instance for wc-path. Requires with-client-manager macro around it. Optional argument check-remote? if status should include remote changes.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn status
-  ([cli-mgr wc-path]
-    (status cli-mgr wc-path false))
-  ([cli-mgr wc-path check-remote?]
-    (doto (.getStatusClient cli-mgr)
-      (.doStatus (io/as-file wc-path) check-remote?))))</pre></td></tr><tr><td class="docs"><p>Create a new working copy. Optional arguments are recursive? and ignore-externals?</p>
+  ([wc-path]
+    (status wc-path false))
+  ([wc-path check-remote?]
+    (doto (.getStatusClient core/*client-manager*)
+      (.doStatus (io/as-file wc-path) check-remote?))))</pre></td></tr><tr><td class="docs"><p>Create a new working copy. Requires with-client-manager macro around it. Optional arguments are recursive? and ignore-externals?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn checkout
-  ([cli-mgr uri wc-path revision]
-     (checkout cli-mgr uri wc-path revision true false))
-  ([cli-mgr uri wc-path revision recursive? ignore-externals?]
-     (doto (.getUpdateClient cli-mgr)
+  ([uri wc-path revision]
+     (checkout uri wc-path revision true false))
+  ([uri wc-path revision recursive? ignore-externals?]
+     (doto (.getUpdateClient core/*client-manager*)
        (.setIgnoreExternals ignore-externals?)
        (.doCheckout (core/svn-url uri)
                     (io/as-file wc-path)
                     (core/svn-revision revision)
                     (core/svn-revision revision)
-                    recursive?))))</pre></td></tr><tr><td class="docs"><p>Switch working copy to different URI. Optional arguments are recursive? and ignore-externals?</p>
+                    recursive?))))</pre></td></tr><tr><td class="docs"><p>Switch working copy to different URI. Requires with-client-manager macro around it. Optional arguments are recursive? and ignore-externals?</p>
 </td><td class="codes"><pre class="brush: clojure">(defn switch
-  ([cli-mgr uri wc-path revision]
-     (switch cli-mgr uri wc-path revision true false))
-  ([cli-mgr uri wc-path revision recursive? ignore-externals?]
-     (doto (.getUpdateClient cli-mgr)
+  ([uri wc-path revision]
+     (switch uri wc-path revision true false))
+  ([uri wc-path revision recursive? ignore-externals?]
+     (doto (.getUpdateClient core/*client-manager*)
        (.setIgnoreExternals ignore-externals?)
        (.doUpdate (io/as-file wc-path)
                   (core/svn-revision revision)
                   SVNDepth/INFINITY
                   true
-                  true))))</pre></td></tr><tr><td class="docs">
+                  true))))</pre></td></tr><tr><td class="docs"><p>Current revision of given working copy. Requires with-client-manager macro around it.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn current-revision
-  [cli-mgr wc-path]
-  (let [status (status cli-mgr wc-path)
+  [wc-path]
+  (let [status (status wc-path)
         revision (.getRevision status)]
     (when revision
       (.getNumber revision))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
