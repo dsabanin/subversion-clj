@@ -31,6 +31,12 @@ Available from <a href="https://clojars.org/subversion-clj">Clojars</a>.
 
 ; Finds all revisions in the repo
 (revisions-for repo)
+
+; Finds youngest revision of the repo
+(youngest repo)
+
+; Gets UUID of the repo
+(uuid repo)
 ```
 
 ## Example of revision records
