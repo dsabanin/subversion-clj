@@ -198,9 +198,12 @@
 (declare ^:dynamic *client-manager*)
 
 (defmacro with-client-manager
-  [args & body]
-  `(binding [*client-manager* (apply client-manager ~args)]
-     (try
-       ~@body
-       (finally
-         (.dispose *client-manager*)))))
+  [& body]
+  (let [with-args? (vector? (first body))
+        args (if with-args? (first body) nil)
+        body (if with-args? (rest body) body)]
+    `(binding [*client-manager* (apply client-manager ~args)]
+       (try
+         ~@body
+         (finally
+           (.dispose *client-manager*))))))
