@@ -69,10 +69,8 @@
                   (SVNRepositoryFactory/create (svn-url uri)))
 
   (^SVNRepository [uri username password]
-                  (let [repo (repo-for uri)
-                        auth-mgr (auth-manager username password)]
-                    (doto repo
-                      (.setAuthenticationManager auth-mgr)))))
+                  (doto (repo-for uri)
+                    (.setAuthenticationManager (auth-manager username password)))))
 
 (defn revisions-for
   "Returns an array with all the revision records in the repository."
@@ -190,11 +188,12 @@
 (defn client-manager
   "New SVNClientManager instance. Optional arguments are username and password for authenticated connections."
   ([]
-    (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
+     (client-manager nil))
   ([username password]
-    (SVNClientManager/newInstance
-      (SVNWCUtil/createDefaultOptions true)
-      (auth-manager username password))))
+     (client-manager (auth-manager username password)))
+  ([auth-mgr]
+     (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)
+                                   auth-mgr)))
 
 (declare ^:dynamic *client-manager*)
 
