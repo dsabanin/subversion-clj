@@ -3094,10 +3094,8 @@ for performance critical parts</p>
   (^SVNRepository [uri]
                   (SVNRepositoryFactory/create (svn-url uri)))
   (^SVNRepository [uri username password]
-                  (let [repo (repo-for uri)
-                        auth-mgr (auth-manager username password)]
-                    (doto repo
-                      (.setAuthenticationManager auth-mgr)))))</pre></td></tr><tr><td class="docs"><p>Returns an array with all the revision records in the repository.</p>
+                  (doto (repo-for uri)
+                    (.setAuthenticationManager (auth-manager username password)))))</pre></td></tr><tr><td class="docs"><p>Returns an array with all the revision records in the repository.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn revisions-for
   ([^SVNRepository repo]
      (revisions-for repo (string-array) 1 -1))
@@ -3194,19 +3192,23 @@ for performance critical parts</p>
   (.getRepositoryUUID repo))</pre></td></tr><tr><td class="docs"><p>New SVNClientManager instance. Optional arguments are username and password for authenticated connections.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn client-manager
   ([]
-    (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)))
+     (client-manager nil))
   ([username password]
-    (SVNClientManager/newInstance
-      (SVNWCUtil/createDefaultOptions true)
-      (auth-manager username password))))</pre></td></tr><tr><td class="docs">
+     (client-manager (auth-manager username password)))
+  ([auth-mgr]
+     (SVNClientManager/newInstance (SVNWCUtil/createDefaultOptions true)
+                                   auth-mgr)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(declare ^:dynamic *client-manager*)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmacro with-client-manager
-  [args &amp; body]
-  `(binding [*client-manager* (apply client-manager ~args)]
-     (try
-       ~@body
-       (finally
-         (.dispose *client-manager*)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diff-generator" name="subversion-clj.diff-generator"><h1 class="project-name">subversion-clj.diff-generator</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  [&amp; body]
+  (let [with-args? (vector? (first body))
+        args (if with-args? (first body) nil)
+        body (if with-args? (rest body) body)]
+    `(binding [*client-manager* (apply client-manager ~args)]
+       (try
+         ~@body
+         (finally
+           (.dispose *client-manager*))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#subversion-clj.diff-generator" name="subversion-clj.diff-generator"><h1 class="project-name">subversion-clj.diff-generator</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns subversion-clj.diff-generator
   (:use
     subversion-clj.utils)
