@@ -112,7 +112,7 @@
 (defn- path-is-file?
   "Estimation check, for performance."
   [path]
-  (not (neg? (.indexOf (basename path) "."))))
+  (-> path basename (.indexOf ".") neg? not))
 
 (defn node-kind
   "Returns kind of a node path at certain revision - file or directory."
