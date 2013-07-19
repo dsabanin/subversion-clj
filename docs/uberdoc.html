@@ -3131,7 +3131,7 @@ for performance critical parts</p>
   (.getName (File. ^String path)))</pre></td></tr><tr><td class="docs"><p>Estimation check, for performance.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- path-is-file?
   [path]
-  (not (neg? (.indexOf (basename path) &quot;.&quot;))))</pre></td></tr><tr><td class="docs"><p>Returns kind of a node path at certain revision - file or directory.</p>
+  (-&gt; path basename (.indexOf &quot;.&quot;) neg? not))</pre></td></tr><tr><td class="docs"><p>Returns kind of a node path at certain revision - file or directory.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn node-kind
   [repo path rev]
   (if (path-is-file? path)
