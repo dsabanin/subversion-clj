@@ -13,17 +13,18 @@
   ([wc-path]
     (status wc-path false))
   ([wc-path check-remote?]
-    (doto (.getStatusClient core/*client-manager*)
-      (.doStatus (io/as-file wc-path) check-remote?))))
+    (let [cli (.getStatusClient core/*client-manager*)]
+      (.doStatus cli (io/as-file wc-path) check-remote?))))
 
 (defn checkout
   "Create a new working copy. Requires with-client-manager macro around it. Optional arguments are recursive? and ignore-externals?"
   ([uri wc-path revision]
      (checkout uri wc-path revision true false))
   ([uri wc-path revision recursive? ignore-externals?]
-     (doto (.getUpdateClient core/*client-manager*)
-       (.setIgnoreExternals ignore-externals?)
-       (.doCheckout (core/svn-url uri)
+     (let [cli (.getUpdateClient core/*client-manager*)]
+       (.setIgnoreExternals cli ignore-externals?)
+       (.doCheckout cli
+                    (core/svn-url uri)
                     (io/as-file wc-path)
                     (core/svn-revision revision)
                     (core/svn-revision revision)
@@ -34,9 +35,10 @@
   ([uri wc-path revision]
      (switch uri wc-path revision true false))
   ([uri wc-path revision recursive? ignore-externals?]
-     (doto (.getUpdateClient core/*client-manager*)
-       (.setIgnoreExternals ignore-externals?)
-       (.doUpdate (io/as-file wc-path)
+     (let [cli (.getUpdateClient core/*client-manager*)]
+       (.setIgnoreExternals cli ignore-externals?)
+       (.doUpdate cli
+                  (io/as-file wc-path)
                   (core/svn-revision revision)
                   SVNDepth/INFINITY
                   true
