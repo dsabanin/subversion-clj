@@ -57,7 +57,7 @@ _Works only with repo object pointing to a local repo directory (not working cop
     (structured-generator ignore-whitespace? nil))
   ([ignore-whitespace? external-diff-command]
     (doto (StructuredDiffGenerator.)
-     (.setEncoding "ISO-8859-1")
+     (.setEncoding "UTF-8")
      (.setDiffOptions (diff-options ignore-whitespace? false false))
      (.setExternalDiffCommand external-diff-command))))
 
