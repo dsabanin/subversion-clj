@@ -30,7 +30,8 @@
   {ISVNGNUDiffGenerator/ADDED :add
    ISVNGNUDiffGenerator/COPIED :copy
    ISVNGNUDiffGenerator/DELETED :delete
-   ISVNGNUDiffGenerator/MODIFIED :edit})
+   ISVNGNUDiffGenerator/MODIFIED :edit
+   ISVNGNUDiffGenerator/NO_DIFF :move})
 
 (defn update-change-type
   [^StructuredDiffGenerator generator path type]
