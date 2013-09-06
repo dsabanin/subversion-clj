@@ -29,22 +29,26 @@
   "File and property changes for a given revision. Returns a single ByteArrayOutputStream instance.
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
-  [^SVNRepository repo revision]
-  (core/with-client-manager
+  ([^SVNRepository repo revision]
+    (diff-for repo revision {:deleted true :added true :copy-form false}))
+  ([^SVNRepository repo revision options]
+    (core/with-client-manager
     (let [output (baos)]
-      (.doGetDiff (svnlook-client) (repo-dir repo) (core/svn-revision revision) true true true output)
-      output)))
+      (.doGetDiff (svnlook-client) (repo-dir repo) (core/svn-revision revision) (:deleted options) (:added options) (:copy-form options) output)
+      output))))
 
 (defn diff-for!
   "File and property changes for a given revision. Writes changes into a generator instance.
 
 _Works only with repo object pointing to a local repo directory (not working copy)._"
-  [^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
-  (core/with-client-manager
+  ([^SVNRepository repo revision ^ISVNGNUDiffGenerator generator]
+    (diff-for! repo revision generator {:deleted true :added true :copy-form false}))
+  ([^SVNRepository repo revision ^ISVNGNUDiffGenerator generator options]
+    (core/with-client-manager
     (doto (svnlook-client)
       (.setDiffGenerator generator)
-      (.doGetDiff (repo-dir repo) (core/svn-revision revision) true true true null-stream)))
-  generator)
+      (.doGetDiff (repo-dir repo) (core/svn-revision revision) (:deleted options) (:added options) (:copy-form options) null-stream)))
+  generator))
 
 (defn diff-options
   [ignore-whitespace? ignore-amount-whitespace? ignore-eol-style?]
