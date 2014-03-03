@@ -39,8 +39,9 @@ Available from <a href="https://clojars.org/subversion-clj">Clojars</a>.
 (uuid repo)
 ```
 
-## Example of revision records
+## Examples
 
+### Revision records
 
 ```clojure
 ; Deleted directory
@@ -61,6 +62,19 @@ Available from <a href="https://clojars.org/subversion-clj">Clojars</a>.
 :author "dsabanin"
 :message "copied dir"
 :changes [["dir" ["new-directory" "old-directory" 5] :copy]]}
+```
+
+### Create a Branch
+
+```clojure
+
+; without authenication
+(def repo "https://wildbit.svn.beanstalkapp.com/my-repo")
+(copy "chris" (str repo "/trunk") (str repo "/branches/my-feature") "create my-feature branch")
+
+; with authenication
+(copy "chris" "password" (str repo "/trunk") (str repo "/branches/my-feature") "create my-feature branch")
+
 ```
 
 ## Credits
