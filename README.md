@@ -2,7 +2,7 @@
 
 #### Clojure library for working with Subversion repositories
 
-This code is initially extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1]. 
+This code is initially extracted from <a href="http://beanstalkapp.com">beanstalkapp.com</a> caching daemon[1].
 It's a work in progress, so be careful with updates to new versions. The API may change, although I'm trying to keep
 thing compatible.
 
@@ -68,12 +68,9 @@ Available from <a href="https://clojars.org/subversion-clj">Clojars</a>.
 
 ```clojure
 
-; without authenication
 (def repo "https://wildbit.svn.beanstalkapp.com/my-repo")
-(copy "chris" (str repo "/trunk") (str repo "/branches/my-feature") "create my-feature branch")
-
-; with authenication
-(copy "chris" "password" (str repo "/trunk") (str repo "/branches/my-feature") "create my-feature branch")
+(def client (core/client-manager "ledet" "password"))
+(copy-url client (str repo "/trunk") (str repo "/branches/new-feature") "Created new-feature branch from trunk")
 
 ```
 
