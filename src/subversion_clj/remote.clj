@@ -1,4 +1,4 @@
-(ns subversion-clj.copy
+(ns subversion-clj.remote
   (:require
     [subversion-clj.core :as core])
   (:use
@@ -6,10 +6,10 @@
   (:import
     [org.tmatesoft.svn.core SVNURL SVNException SVNProperties]
     [org.tmatesoft.svn.core.auth ISVNAuthenticationManager]
-    [org.tmatesoft.svn.core.wc SVNCopyClient SVNWCUtil SVNCopySource ISVNOptions SVNRevision SVNClientManager]))
+    [org.tmatesoft.svn.core.wc SVNWCUtil SVNCopySource SVNRevision SVNClientManager]))
 
 (defn copy-source-from-url
-  "Returns a new SVNCopySource instance"
+  "Takes a URL string and returns a new SVNCopySource instance"
   [url]
   (new SVNCopySource SVNRevision/HEAD, SVNRevision/HEAD, (core/svn-url url)))
 
@@ -44,3 +44,30 @@
           destination-url (core/svn-url destination)
           props (new SVNProperties)]
       (.doCopy (.getCopyClient client) sources destination-url false false false message props))))
+
+(defn delete-url
+  "Deletes a file or directory in a given repository url or working copy.
+
+  Parameters:
+   SVNClientManager client: (optional)
+   String source: (required) any valid Subversion URL such as \"http://userInfo@host:port/path\" or \"file:///path\"
+   String message: (required) commit message for the commit
+
+  Returns:
+   SVNCommitInfo object with related commit information
+
+  Example Usage:
+
+    (with-client-manager
+      (delete-url \"file:///repository-path/branches/my-stale-branch\" \"Deleted my-stale-branch\"))
+
+  or
+
+    (def client (core/client-manager \"username\" \"password\"))
+    (delete-url client \"file:///repository-path/branches/my-stale-branch\" \"Deleted my-stale-branch\")"
+
+  ([repo-path commit-message]
+    (delete-url core/*client-manager* repo-path commit-message))
+  ([^SVNClientManager client ^String repo-path ^String commit-message]
+    (let [cli (.getCommitClient client)]
+      (.doDelete cli (into-array SVNURL [(core/svn-url repo-path)]) commit-message))))
