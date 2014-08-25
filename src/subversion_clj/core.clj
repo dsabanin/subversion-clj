@@ -23,7 +23,7 @@
      [org.tmatesoft.svn.core.internal.io.dav DAVRepositoryFactory]
      [org.tmatesoft.svn.core.internal.io.svn SVNRepositoryFactoryImpl]
      [org.tmatesoft.svn.core.internal.util SVNHashMap SVNHashMap$TableEntry]
-     [org.tmatesoft.svn.core SVNURL SVNLogEntry SVNLogEntryPath SVNException]
+     [org.tmatesoft.svn.core SVNURL SVNLogEntry SVNLogEntryPath SVNException SVNNodeKind]
      [org.tmatesoft.svn.core.io SVNRepository SVNRepositoryFactory]
      [org.tmatesoft.svn.core.wc SVNWCUtil SVNClientManager SVNRevision]
      [org.apache.commons.io.output NullOutputStream]
@@ -32,7 +32,7 @@
      [subversion.clj StructuredDiffGenerator]
      [org.tmatesoft.svn.core.wc.admin ISVNGNUDiffGenerator SVNLookClient]))
 
-(declare log-record node-kind node-kind-at-rev)
+(declare log-record log-obj)
 
 (DAVRepositoryFactory/setup)
 (SVNRepositoryFactoryImpl/setup)
@@ -78,7 +78,7 @@
      (revisions-for repo (string-array) 1 -1))
   ([^SVNRepository repo paths from-rev to-rev]
      (->> (.log repo paths (linked-list) from-rev to-rev true false)
-          (map #(log-record repo %))
+          (map #(log-record %))
           (into []))))
 
 
@@ -103,30 +103,23 @@
   (let [revision (Long. revision)]
     (->> (.log repo (string-array) (linked-list) revision revision true false)
       first
-      (log-record repo))))
+      log-record)))
 
 (defn- basename
   [path]
   (.getName (File. ^String path)))
 
-(defn- path-is-file?
-  "Estimation check, for performance."
-  [path]
-  (-> path basename (.indexOf ".") neg? not))
+(defn- node-kind-at-rev ^String
+  [^SVNRepository repo ^String path ^Long rev]
+  (.. (.checkPath repo path rev) toString))
 
 (defn node-kind
   "Returns kind of a node path at certain revision - file or directory."
   [repo path rev]
-  (if (path-is-file? path)
-    "file"
-    (let [node-kind-at-current-rev (node-kind-at-rev repo path rev)]
-      (if (= "none" node-kind-at-current-rev)
-        (node-kind-at-rev repo path (dec rev))
-        node-kind-at-current-rev))))
-
-(defn- node-kind-at-rev ^String
-  [^SVNRepository repo ^String path ^Long rev]
-  (.. (.checkPath repo path rev) toString))
+  (let [node-kind-at-current-rev (node-kind-at-rev repo path rev)]
+    (if (= "none" node-kind-at-current-rev)
+      (node-kind-at-rev repo path (dec rev))
+      node-kind-at-current-rev)))
 
 (def letter->change-sym
   {\A :add
@@ -143,28 +136,23 @@
       :copy)))
 
 (defn- detailed-path
-  [repo rev log-record ^SVNHashMap$TableEntry path-record]
-  (let [path (normalize-path (.getKey path-record))
-        change-rec ^FSPathChange (.getValue path-record)
-        node-kind (node-kind repo path rev)
-        change-kind (change-kind change-rec)]
-    (cond
-     (= change-kind :copy) [node-kind
-                            [path, (normalize-path (.getCopyPath change-rec)), (.getCopyRevision change-rec)]
-                            change-kind]
-     :else [node-kind path change-kind])))
+  [^SVNHashMap$TableEntry [^String path ^SVNLogEntryPath node]]
+  (let [path (normalize-path path)
+        node-kind (str ^SVNNodeKind (.getKind node))
+        change-kind (change-kind node)]
+    (if (= :copy change-kind)
+      [node-kind [path (normalize-path (.getCopyPath node)) (.getCopyRevision node)] change-kind]
+      [node-kind path change-kind])))
 
 (defn- changed-paths
-  [repo rev ^SVNLogEntry log-obj]
-  (if (= rev (long 0))
-    []
-    (map #(detailed-path repo rev log-record %)
-         ^SVNHashMap (.getChangedPaths log-obj))))
+  [^SVNLogEntry log-obj]
+  (let [changes (.getChangedPaths log-obj)]
+    (doall (map detailed-path changes))))
 
-(defn- log-record [repo ^SVNLogEntry log-obj]
+(defn- log-record [^SVNLogEntry log-obj]
   (let [revision (.getRevision log-obj)
         message (.getMessage log-obj)
-        paths (doall (changed-paths repo revision log-obj))]
+        paths (changed-paths log-obj)]
     {:revision revision
      :author (.getAuthor log-obj)
      :time (.getDate log-obj)
